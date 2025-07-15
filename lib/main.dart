@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'login.dart'; // Corrected path
+import 'Registration.dart'; // Start screen
+// You can also import 'login.dart' or 'home.dart' if needed
 
 void main() {
   runApp(const POSApp());
@@ -15,11 +16,11 @@ class POSApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.deepPurple,
-        inputDecorationTheme: InputDecorationTheme(
+        inputDecorationTheme: const InputDecorationTheme(
           border: OutlineInputBorder(),
         ),
       ),
-      home: LoginScreen(),
+      home: RegistrationScreen(), // ✅ Start at Registration
     );
   }
 }

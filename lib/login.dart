@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'registration.dart';
+import 'Registration.dart';
+import 'home.dart'; // ✅ Temporary home screen
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -15,15 +16,17 @@ class _LoginScreenState extends State<LoginScreen> {
   void loginOwner() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      // TODO: Add login validation logic (e.g. check with Firebase or local DB)
       print("Email: $email");
       print("Password: $password");
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login successful')),
       );
 
-      // Navigate to home screen (placeholder)
-      // Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => HomeScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => HomeScreen()),
+      );
     }
   }
 
@@ -56,11 +59,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: loginOwner,
                 child: Text('Login'),
               ),
+              ElevatedButton(
+                onPressed: () {
+                  // TEMPORARY home navigation
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => HomeScreen()),
+                  );
+                },
+                child: Text('Go to Home (Temporary)'),
+              ),
               TextButton(
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => OwnerRegistrationScreen()),
+                    MaterialPageRoute(builder: (_) => RegistrationScreen()),
                   );
                 },
                 child: Text("Don't have an account? Register"),
