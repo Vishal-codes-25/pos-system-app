@@ -1,85 +1,120 @@
 import 'package:flutter/material.dart';
-import 'home.dart'; // For navigation after registration
-import 'login.dart'; // For "Already have an account? Login" button
+import 'login.dart'; // Make sure you have login.dart created
 
-class RegistrationScreen extends StatefulWidget {
+class RegistrationPage extends StatefulWidget {
   @override
-  _RegistrationScreenState createState() => _RegistrationScreenState();
+  _RegistrationPageState createState() => _RegistrationPageState();
 }
 
-class _RegistrationScreenState extends State<RegistrationScreen> {
+class _RegistrationPageState extends State<RegistrationPage> {
   final _formKey = GlobalKey<FormState>();
-
-  String name = '';
+  String username = '';
   String email = '';
   String password = '';
-
-  void registerOwner() {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      print("Name: $name");
-      print("Email: $email");
-      print("Password: $password");
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Registration successful")),
-      );
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => HomeScreen()),
-      );
-    }
-  }
+  String confirmPassword = '';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Owner Registration')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Full Name'),
-                onSaved: (value) => name = value!.trim(),
-                validator: (value) => value!.isEmpty ? 'Enter your name' : null,
-              ),
-              TextFormField(
-                decoration: InputDecoration(labelText: 'Email'),
-                onSaved: (value) => email = value!.trim(),
-                validator: (value) => value!.isEmpty || !value.contains('@')
-                    ? 'Enter valid email'
-                    : null,
-              ),
-              TextFormField(
-                obscureText: true,
-                decoration: InputDecoration(labelText: 'Password'),
-                onSaved: (value) => password = value!.trim(),
-                validator: (value) =>
-                value!.length < 6 ? 'Minimum 6 characters' : null,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: registerOwner,
-                child: Text('Register'),
-              ),
-              SizedBox(height: 10),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => LoginScreen()),
-                  );
-                },
-                child: Text("Already have an account? Login"),
-              ),
-            ],
+      backgroundColor: Colors.grey[300],
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 40.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                Text(
+                  'Register',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 30),
+                _buildTextField('Username'),
+                SizedBox(height: 20),
+                _buildTextField('Email-id'),
+                SizedBox(height: 20),
+                _buildTextField('Password', isPassword: true),
+                SizedBox(height: 20),
+                _buildTextField('Confirm-Password', isPassword: true),
+                SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      print("Registered: $username, $email");
+                      // Navigate or handle registration logic
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.brown[300],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 40.0, vertical: 12.0),
+                  ),
+                  child: Text('Submit'),
+                ),
+                SizedBox(height: 15),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginPage()),
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.brown[200],
+                    foregroundColor: Colors.black,
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  child: Text("already have an account"),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField(String label, {bool isPassword = false}) {
+    return TextFormField(
+      obscureText: isPassword,
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Colors.brown[300],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(5),
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) return 'Enter $label';
+        if (label == 'Email-id' && !value.contains('@')) return 'Enter valid email';
+        if (label == 'Confirm-Password' && value != password) return 'Passwords do not match';
+        return null;
+      },
+      onChanged: (value) {
+        setState(() {
+          switch (label) {
+            case 'Username':
+              username = value;
+              break;
+            case 'Email-id':
+              email = value;
+              break;
+            case 'Password':
+              password = value;
+              break;
+            case 'Confirm-Password':
+              confirmPassword = value;
+              break;
+          }
+        });
+      },
     );
   }
 }

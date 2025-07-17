@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
-import 'Registration.dart'; // Start screen
-// You can also import 'login.dart' or 'home.dart' if needed
+import 'Registration.dart';
+import 'home.dart';
+import 'settings.dart'; // Imported settings page
 
 void main() {
-  runApp(const POSApp());
+  runApp(MyApp());
 }
 
-class POSApp extends StatelessWidget {
-  const POSApp({super.key});
-
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'POS App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-        ),
+        primarySwatch: Colors.brown,
       ),
-      home: RegistrationScreen(), // ✅ Start at Registration
+      home: RegistrationPage(), // Launches registration screen by default
+      routes: {
+        '/home': (context) => HomePage(),         // Navigates to Home screen
+        '/settings': (context) => SettingsPage(), // Navigates to Settings screen
+        // '/login': (context) => LoginPage(),     // Uncomment when needed
+      },
     );
   }
 }
