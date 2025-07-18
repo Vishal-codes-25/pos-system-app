@@ -1,38 +1,42 @@
 import 'package:flutter/material.dart';
 import 'home.dart';
+//import 'categories.dart';
+//import 'cart.dart';
+//import 'product.dart';
+import 'settings.dart';
 
-class SettingsPage extends StatelessWidget {
-  void navigateTo(BuildContext context, Widget page) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => page),
-    );
+class SettingsPage extends StatefulWidget {
+  @override
+  _SettingsPageState createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  int _selectedIndex = 4;
+
+  final List<Widget> _screens = [
+    HomePage(),
+  //  CategoriesPage(),
+  //  CartPage(),
+  //  ProductPage(),
+    SettingsPage(), // current page
+  ];
+
+  void _onItemTapped(int index) {
+    if (index != _selectedIndex) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => _screens[index]),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       backgroundColor: Colors.grey[200],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 4,
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => HomePage()));
-          }
-          // Add other page navigations as needed
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Categories'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Cart'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-        ],
-      ),
       appBar: AppBar(
-        backgroundColor: Color(0xFFB38E5D), // Gold-brown header
+        backgroundColor: Color(0xFFB38E5D),
         title: const Text('Settings'),
         leading: const Icon(Icons.settings),
       ),
@@ -50,6 +54,48 @@ class SettingsPage extends StatelessWidget {
           ],
         ),
       ),
+      // Layered Navigation Bar
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.only(bottom: 16.0, left: 16.0, right: 16.0),
+        child: Container(
+          height: 60,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(Icons.home, 0),
+              _buildNavItem(Icons.category, 1),
+              _buildNavItem(Icons.shopping_cart, 2),
+              _buildNavItem(Icons.production_quantity_limits, 3),
+              _buildNavItem(Icons.settings, 4),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, int index) {
+    return GestureDetector(
+      onTap: () => _onItemTapped(index),
+      child: CircleAvatar(
+        backgroundColor: _selectedIndex == index ? Colors.brown[300] : Colors.transparent,
+        radius: 22,
+        child: Icon(
+          icon,
+          color: _selectedIndex == index ? Colors.white : Colors.grey[600],
+        ),
+      ),
     );
   }
 
@@ -57,9 +103,7 @@ class SettingsPage extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       child: ElevatedButton(
-        onPressed: () {
-          // Add individual navigation if needed
-        },
+        onPressed: () {},
         style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFFB38E5D),
           minimumSize: Size(double.infinity, 50),
@@ -79,7 +123,7 @@ class SettingsPage extends StatelessWidget {
   Widget logoutButton(BuildContext context) {
     return ElevatedButton(
       onPressed: () {
-        Navigator.pop(context); // or Navigator.push to login page
+        Navigator.pop(context); // Or push login screen
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: Color(0xFFB38E5D),
