@@ -1,32 +1,28 @@
 import 'package:flutter/material.dart';
 import 'home.dart';
-//import 'categories.dart';
-//import 'cart.dart';
-//import 'product.dart';
-import 'settings.dart';
+// import 'categories.dart'; // Add this when ready
+import 'Cart.dart';
+import 'product.dart';
+import 'settings.dart'; // Current file
+import 'layered_nav_bar.dart';
+import 'profile.dart'; // <-- Add this import
 
-class SettingsPage extends StatefulWidget {
-  @override
-  _SettingsPageState createState() => _SettingsPageState();
-}
-
-class _SettingsPageState extends State<SettingsPage> {
-  int _selectedIndex = 4;
-
-  final List<Widget> _screens = [
-    HomePage(),
-  //  CategoriesPage(),
-  //  CartPage(),
-  //  ProductPage(),
-    SettingsPage(), // current page
-  ];
-
-  void _onItemTapped(int index) {
-    if (index != _selectedIndex) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => _screens[index]),
-      );
+class SettingsPage extends StatelessWidget {
+  void onNavTap(BuildContext context, int index) {
+    if (index == 4) return; // Already on Settings
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(context, '/home');
+        break;
+      case 1:
+        Navigator.pushReplacementNamed(context, '/categories');
+        break;
+      case 2:
+        Navigator.pushReplacementNamed(context, '/cart');
+        break;
+      case 3:
+        Navigator.pushReplacementNamed(context, '/product');
+        break;
     }
   }
 
@@ -34,87 +30,80 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      backgroundColor: Colors.grey[200],
-      appBar: AppBar(
-        backgroundColor: Color(0xFFB38E5D),
-        title: const Text('Settings'),
-        leading: const Icon(Icons.settings),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            settingButton(context, "Languages"),
-            settingButton(context, "Privacy Policy"),
-            settingButton(context, "Password & Security"),
-            settingButton(context, "Terms & Condition"),
-            settingButton(context, "Previous Bookings"),
-            const SizedBox(height: 20),
-            logoutButton(context),
-          ],
-        ),
-      ),
-      // Layered Navigation Bar
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.only(bottom: 16.0, left: 16.0, right: 16.0),
-        child: Container(
-          height: 60,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 10,
-                offset: Offset(0, 4),
+      body: Stack(
+        children: [
+          // Background image
+          Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/settings_bg.jpg'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          // Main Content
+          Column(
+            children: [
+              const SizedBox(height: 50),
+              Row(
+                children: const [
+                  SizedBox(width: 20),
+                  Icon(Icons.arrow_back_ios, color: Colors.black),
+                  SizedBox(width: 10),
+                  Text(
+                    'Settings',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  children: [
+                    settingButton("Language"),
+                    settingButton("Privacy Policy"),
+                    settingButton("Password & Security"),
+                    settingButton("Terms & Conditions"),
+                    settingButton("Add Profile", onTap: () {
+                      Navigator.pushNamed(context, '/profile');
+                    }),
+                    const SizedBox(height: 20),
+                    logoutButton(context),
+                  ],
+                ),
               ),
             ],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.home, 0),
-              _buildNavItem(Icons.category, 1),
-              _buildNavItem(Icons.shopping_cart, 2),
-              _buildNavItem(Icons.production_quantity_limits, 3),
-              _buildNavItem(Icons.settings, 4),
-            ],
-          ),
-        ),
+        ],
+      ),
+      bottomNavigationBar: LayeredNavBar(
+        selectedIndex: 4,
+        onTap: (index) => onNavTap(context, index),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, int index) {
-    return GestureDetector(
-      onTap: () => _onItemTapped(index),
-      child: CircleAvatar(
-        backgroundColor: _selectedIndex == index ? Colors.brown[300] : Colors.transparent,
-        radius: 22,
-        child: Icon(
-          icon,
-          color: _selectedIndex == index ? Colors.white : Colors.grey[600],
-        ),
-      ),
-    );
-  }
-
-  Widget settingButton(BuildContext context, String title) {
+  Widget settingButton(String title, {VoidCallback? onTap}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
-      child: ElevatedButton(
-        onPressed: () {},
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFFB38E5D),
-          minimumSize: Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(title, style: const TextStyle(fontSize: 16, color: Colors.white)),
-            const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.white),
-          ],
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap ?? () {},
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            height: 55,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 16, color: Colors.black)),
+                const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.black),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -123,12 +112,12 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget logoutButton(BuildContext context) {
     return ElevatedButton(
       onPressed: () {
-        Navigator.pop(context); // Or push login screen
+        Navigator.pop(context); // or Navigator.pushReplacementNamed(context, '/login');
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor: Color(0xFFB38E5D),
-        minimumSize: Size(double.infinity, 50),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: Colors.red[600],
+        minimumSize: const Size(double.infinity, 50),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

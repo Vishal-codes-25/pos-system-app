@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'Registration.dart';
 import 'home.dart';
-import 'settings.dart'; // Imported settings page
+import 'settings.dart';
+import 'Cart.dart';
+import 'product.dart';
+import 'Profile.dart'; // <-- Added Profile page
+// import 'categories.dart'; // Uncomment when CategoriesPage is implemented
 
 void main() {
   runApp(MyApp());
@@ -16,11 +20,15 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.brown,
       ),
-      home: RegistrationPage(), // Launches registration screen by default
+      // initialRoute: '/home', // Optional: Use this if not starting with RegistrationPage
+      home: RegistrationPage(), // App starts here
       routes: {
-        '/home': (context) => HomePage(),         // Navigates to Home screen
-        '/settings': (context) => SettingsPage(), // Navigates to Settings screen
-        // '/login': (context) => LoginPage(),     // Uncomment when needed
+        '/home': (context) => HomePage(),
+        '/settings': (context) => SettingsPage(),
+        '/cart': (context) => CartPage(),
+        '/product': (context) => ProductPage(),
+        '/profile': (context) => ProfilePage(), // <-- Route for profile screen
+        // '/categories': (context) => CategoriesPage(), // Add when ready
       },
     );
   }

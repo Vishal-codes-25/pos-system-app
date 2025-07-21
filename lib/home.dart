@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'settings.dart';
+import 'scanner.dart';
 
 class HomePage extends StatelessWidget {
   final List<Map<String, String>> categories = [
@@ -13,189 +13,77 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE8F7F8), // Soft background
-      body: Stack(
+      appBar: AppBar(
+        title: Row(
+          children: [
+            CircleAvatar(child: Icon(Icons.person)),
+            SizedBox(width: 8),
+            Text('User Kirana Store'),
+            Spacer(),
+            IconButton(
+              icon: Icon(Icons.qr_code_scanner),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => ScannerPage()),
+                );
+              },
+            )
+          ],
+        ),
+      ),
+      body: ListView(
         children: [
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 80), // Space for nav bar
-              child: Column(
-                children: [
-                  // User info
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundImage: AssetImage('assets/images/userimage.jpg'),
-                        ),
-                        SizedBox(width: 10),
-                        Text(
-                          "User Kirana Store",
-                          style: TextStyle(fontSize: 18, color: Colors.black87),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Search bar
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: "Search For Product",
-                        prefixIcon: Icon(Icons.search),
-                        suffixIcon: Icon(Icons.clear),
-                        filled: true,
-                        fillColor: Colors.grey[200],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 10),
-
-                  // 🖼️ Banner image
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 12),
-                    height: 150,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/shopingcartimage.png'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 10),
-
-                  // Title
-                  Text(
-                    "SHOP BY CATEGORIES",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.brown[800],
-                    ),
-                  ),
-                  SizedBox(height: 10),
-
-                  // Category Grid
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: GridView.builder(
-                      shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
-                      itemCount: categories.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 3 / 2.8,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                      ),
-                      itemBuilder: (context, index) {
-                        final category = categories[index];
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 4,
-                                spreadRadius: 2,
-                                offset: Offset(2, 2),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: ClipRRect(
-                                  borderRadius:
-                                  BorderRadius.vertical(top: Radius.circular(12)),
-                                  child: Image.asset(
-                                    category['image']!,
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(6.0),
-                                child: Text(
-                                  category['name']!,
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
+          Padding(
+            padding: EdgeInsets.all(10),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Search for Product',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30)),
               ),
             ),
           ),
-
-          // 🍰 Floating bottom navigation bar
-          Positioned(
-            left: 20,
-            right: 20,
-            bottom: 20,
-            child: Container(
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+          Image.asset('assets/images/promo_banner.jpg', height: 150), // Your promo image
+          Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: Text('SHOP BY CATEGORIES',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+          GridView.builder(
+            padding: EdgeInsets.all(10),
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: categories.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, mainAxisSpacing: 10, crossAxisSpacing: 10),
+            itemBuilder: (context, index) {
+              return Column(
                 children: [
-                  navIcon(Icons.home, "Home", 0, context),
-                  navIcon(Icons.category, "Categories", 1, context),
-                  navIcon(Icons.shopping_cart, "Cart", 2, context),
-                  navIcon(Icons.production_quantity_limits, "Product", 3, context),
-                  navIcon(Icons.settings, "Settings", 4, context),
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(categories[index]['image']!, fit: BoxFit.cover),
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(categories[index]['name']!)
                 ],
-              ),
-            ),
+              );
+            },
           ),
         ],
       ),
-    );
-  }
-
-  // Navigation Icon Button
-  Widget navIcon(IconData icon, String label, int index, BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        if (index == 4) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => SettingsPage()),
-          );
-        }
-        // Add more navigation logic as needed
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: Colors.brown, size: 26),
-          Text(
-            label,
-            style: TextStyle(fontSize: 11, color: Colors.black87),
-          ),
+      bottomNavigationBar: BottomNavigationBar(
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.grey,
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: "Categories"),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: "Cart"),
+          BottomNavigationBarItem(icon: Icon(Icons.inventory), label: "Product"),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
         ],
       ),
     );
