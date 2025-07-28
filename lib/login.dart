@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pos/layered_nav_bar.dart';
 import 'home.dart'; // Optional: for navigating to home screen
 import 'registration.dart'; // Optional: for navigating to registration
 
@@ -57,7 +58,7 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => HomePage()),
+                      MaterialPageRoute(builder: (context) => LayeredNavigationExample()),
                     );
                   },
                   style: TextButton.styleFrom(

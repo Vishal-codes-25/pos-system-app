@@ -4,8 +4,8 @@ import 'home.dart';
 import 'settings.dart';
 import 'Cart.dart';
 import 'product.dart';
-import 'Profile.dart'; // <-- Added Profile page
-// import 'categories.dart'; // Uncomment when CategoriesPage is implemented
+import 'Profile.dart';
+import 'layered_nav_bar.dart'; // Main screen with nav bar
 
 void main() {
   runApp(MyApp());
@@ -20,15 +20,14 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.brown,
       ),
-      // initialRoute: '/home', // Optional: Use this if not starting with RegistrationPage
-      home: RegistrationPage(), // App starts here
+      home: RegistrationPage(), // First screen when app launches
       routes: {
-        '/home': (context) => HomePage(),
+        '/home': (context) => LayeredNavigationExample(), // ✅ main screen after login
         '/settings': (context) => SettingsPage(),
         '/cart': (context) => CartPage(),
         '/product': (context) => ProductPage(),
-        '/profile': (context) => ProfilePage(), // <-- Route for profile screen
-        // '/categories': (context) => CategoriesPage(), // Add when ready
+        // Add categories if implemented later
+        // '/categories': (context) => CategoriesPage(),
       },
     );
   }

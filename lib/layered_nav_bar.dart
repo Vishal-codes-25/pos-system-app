@@ -1,55 +1,84 @@
 import 'package:flutter/material.dart';
+import 'package:pos/product.dart';
+import 'home.dart';
+import 'categories.dart';
+import 'Cart.dart';
+//import 'Profile.dart';      // Assuming this is your Product/Profile screen
+import 'settings.dart';
 
-class LayeredNavBar extends StatelessWidget {
-  final int selectedIndex;
-  final ValueChanged<int> onTap;
+class LayeredNavigationExample extends StatefulWidget {
+  @override
+  _LayeredNavigationExampleState createState() => _LayeredNavigationExampleState();
+}
 
-  const LayeredNavBar({
-    Key? key,
-    required this.selectedIndex,
-    required this.onTap,
-  }) : super(key: key);
+class _LayeredNavigationExampleState extends State<LayeredNavigationExample> {
+  int _selectedIndex = 0;
+
+  final List<Widget> _screens = [
+    HomePage(),         // index 0
+    CategoriesPage(),   // index 1
+    CartPage(),         // index 2
+    ProductPage(),      // index 3 - product/profile
+    SettingsPage(),     // index 4
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0, left: 12.0, right: 12.0),
-      child: Container(
-        height: 65,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(40),
-          boxShadow: const [
-            BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4)),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(context, Icons.home, 0, "Home"),
-            _buildNavItem(context, Icons.category, 1, "Categories"),
-            _buildNavItem(context, Icons.shopping_cart, 2, "Cart"),
-            _buildNavItem(context, Icons.production_quantity_limits, 3, "Product"),
-            _buildNavItem(context, Icons.settings, 4, "Settings"),
-          ],
-        ),
+    return Scaffold(
+      extendBody: true,
+      body: Stack(
+        children: [
+          _screens[_selectedIndex],
+          Positioned(
+            bottom: 16,
+            left: 16,
+            right: 16,
+            child: Container(
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(Icons.home, 0),
+                  _buildNavItem(Icons.category, 1),
+                  _buildNavItem(Icons.shopping_cart, 2),
+                  _buildNavItem(Icons.person, 3),
+                  _buildNavItem(Icons.settings, 4),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildNavItem(BuildContext context, IconData icon, int index, String label) {
-    final isSelected = selectedIndex == index;
+  Widget _buildNavItem(IconData icon, int index) {
     return GestureDetector(
-      onTap: () => onTap(index),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: isSelected ? Colors.black : Colors.grey[500]),
-          Text(
-            label,
-            style: TextStyle(fontSize: 12, color: isSelected ? Colors.black : Colors.grey[500]),
-          ),
-        ],
+      onTap: () => _onItemTapped(index),
+      child: CircleAvatar(
+        backgroundColor: _selectedIndex == index ? Colors.brown[300] : Colors.transparent,
+        radius: 22,
+        child: Icon(
+          icon,
+          color: _selectedIndex == index ? Colors.white : Colors.grey[600],
+        ),
       ),
     );
   }

@@ -1,184 +1,117 @@
 import 'package:flutter/material.dart';
 import 'home.dart';
-import 'layered_nav_bar.dart'; // ✅ Use shared nav bar
-import 'settings.dart';        // Required for navigation
+import 'categories.dart';
+import 'Cart.dart';
+import 'settings.dart';
 
 class ProductPage extends StatefulWidget {
+  const ProductPage({Key? key}) : super(key: key);
+
   @override
   _ProductPageState createState() => _ProductPageState();
 }
 
 class _ProductPageState extends State<ProductPage> {
-  int _selectedIndex = 3;
-
-  List<Map<String, dynamic>> products = [
-    {'name': 'Parle-G', 'price': 10, 'quantity': 2},
-    {'name': 'Sprite', 'price': 45, 'quantity': 1},
-    {'name': 'Pen', 'price': 10, 'quantity': 3},
-    {'name': 'Ice Cream', 'price': 35, 'quantity': 2},
-  ];
-
-  final TextEditingController _searchController = TextEditingController();
+  int _selectedIndex = 3; // This is the index for Product/Profile
 
   void _onNavTap(int index) {
     if (index == _selectedIndex) return;
 
     switch (index) {
       case 0:
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => HomePage()));
         break;
       case 1:
-        Navigator.pushReplacementNamed(context, '/categories');
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => CategoriesPage()));
         break;
       case 2:
-        Navigator.pushReplacementNamed(context, '/cart');
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (_) => CartPage()));
         break;
       case 3:
-      // Already on Product page
+      // Already on Product/Profile page
         break;
       case 4:
         Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => SettingsPage()),
-        );
+            context, MaterialPageRoute(builder: (_) => SettingsPage()));
         break;
     }
   }
 
+  final List<Map<String, dynamic>> products = [
+    {'name': 'Parle-G', 'price': 10},
+    {'name': 'Dairy Milk', 'price': 20},
+    {'name': 'Coca-Cola', 'price': 40},
+    {'name': 'Pepsi', 'price': 40},
+    {'name': 'Bread', 'price': 25},
+    {'name': 'Butter', 'price': 45},
+    {'name': 'Notebook', 'price': 60},
+    {'name': 'Pen', 'price': 5},
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true,
-      body: Stack(
-        children: [
-          // Background
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage("assets/images/settings_bg.jpg"),
-                fit: BoxFit.cover,
-              ),
-            ),
+      appBar: AppBar(
+        title: Text('Product Page'),
+        backgroundColor: Colors.brown[300],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: GridView.builder(
+          itemCount: products.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: 3 / 2,
           ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14.0),
+          itemBuilder: (context, index) {
+            final product = products[index];
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.brown[50],
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.brown.shade100),
+              ),
+              padding: const EdgeInsets.all(12),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 10),
-                  Row(
-                    children: const [
-                      Icon(Icons.arrow_back_ios, size: 20),
-                      SizedBox(width: 8),
-                      Icon(Icons.inventory_2_outlined, size: 22),
-                      SizedBox(width: 6),
-                      Text("Add Product", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Search Bar
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.search, color: Colors.grey),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            decoration: const InputDecoration(
-                              hintText: "Search for Add Product",
-                              border: InputBorder.none,
-                            ),
-                          ),
-                        ),
-                      ],
+                  Text(
+                    product['name'],
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  // Product List
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: products.length,
-                      itemBuilder: (context, index) {
-                        return _buildProductItem(products[index]);
-                      },
+                  const SizedBox(height: 8),
+                  Text(
+                    "₹${product['price']}",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black54,
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  // Buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        child: const Text("Close"),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        child: const Text("Checkout", style: TextStyle(color: Colors.white)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
                 ],
               ),
-            ),
-          ),
-        ],
+            );
+          },
+        ),
       ),
-      bottomNavigationBar: LayeredNavBar(
-        selectedIndex: _selectedIndex,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
         onTap: _onNavTap,
-      ),
-    );
-  }
-
-  Widget _buildProductItem(Map<String, dynamic> product) {
-    return Container(
-      height: 50,
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          Expanded(flex: 3, child: Text(product['name'], style: const TextStyle(fontSize: 15))),
-          Expanded(child: Text("\₹${product['price']}")),
-          Expanded(
-            child: Container(
-              height: 28,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Text("${product['quantity']}", style: const TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ),
-          IconButton(
-            onPressed: () {
-              setState(() {
-                product['quantity']++;
-              });
-            },
-            icon: const Icon(Icons.add_circle, color: Colors.black),
-          ),
+        selectedItemColor: Colors.brown[300],
+        unselectedItemColor: Colors.grey[600],
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.category), label: "Categories"),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: "Cart"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
         ],
       ),
     );
