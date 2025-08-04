@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class SalesPage extends StatelessWidget {
-  const SalesPage({super.key});
+class LanguagePage extends StatelessWidget {
+  const LanguagePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -12,35 +12,33 @@ class SalesPage extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Sales', style: TextStyle(color: Colors.black)),
+        title: const Text('Language', style: TextStyle(color: Colors.black)),
         centerTitle: true,
       ),
       body: Column(
         children: [
           const SizedBox(height: 20),
-          buildSalesItem(context, 'Today Sales'),
-          buildSalesItem(context, 'Weekly Sales'),
-          buildSalesItem(context, 'Monthly Sales'),
-          buildSalesItem(context, 'Yearly Sales'),
+          buildLanguageTile(context, 'English'),
+          buildLanguageTile(context, 'Hindi'),
+          buildLanguageTile(context, 'Marathi'),
           const Spacer(),
+          // Gift Image
           Image.asset(
-            'assets/gifts.png', // Replace with your gift image or use multiple positioned icons
+            'assets/gifts.png', // Replace with your asset path
             height: 100,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.black54,
-        currentIndex: 4, // Set based on active tab
+        currentIndex: 4, // Change index according to current tab
         onTap: (index) {
-          // TODO: Handle navigation
+          // Handle navigation here
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
@@ -53,7 +51,7 @@ class SalesPage extends StatelessWidget {
     );
   }
 
-  Widget buildSalesItem(BuildContext context, String title) {
+  Widget buildLanguageTile(BuildContext context, String language) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Container(
@@ -62,13 +60,13 @@ class SalesPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         child: ListTile(
-          title: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          title: Text(language, style: const TextStyle(fontWeight: FontWeight.bold)),
           trailing: const Icon(Icons.chevron_right),
           onTap: () {
-            // TODO: Navigate to specific sales page
+            // Handle language change or navigation
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('$language selected')),
+            );
           },
         ),
       ),

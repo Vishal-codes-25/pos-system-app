@@ -30,8 +30,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^0.13.5
-  mobile_scanner: ^3.5.1
+  mobile_scanner: ^3.5.1    # Barcode scanner plugin
+  http: ^0.13.6                # For API
+  sqflite: ^2.3.2              # Local database
+  path_provider: ^2.1.1        # DB file path
 
 
 
@@ -64,6 +66,39 @@ flutter:
     - assets/images/shopingcartimage.png
     - assets/images/userimage.jpg
     - assets/images/shopping_banner.jpg
+    - assets/images/categories/cola.jpg
+    - assets/images/categories/Campa.jpg
+    - assets/images/categories/Sprite.jpg
+    - assets/images/categories/Slice.jpg
+    - assets/images/categories/Thums.jpg
+    - assets/images/categories/Maaza.jpg
+    - assets/images/categories/Salt.jpg
+    - assets/images/categories/Besan.jpg
+    - assets/images/categories/Maggi.jpg
+    - assets/images/categories/Bread.jpg
+    - assets/images/categories/Oats.jpg
+    - assets/images/categories/Tea powder.jpg
+    - assets/images/categories/Corn Flakes.jpg
+    - assets/images/categories/Milk.jpg
+    - assets/images/categories/Paneer.jpg
+    - assets/images/categories/Amul.jpg
+    - assets/images/categories/Ghee.jpg
+    - assets/images/categories/Cheese.jpg
+    - assets/images/categories/Note Books.jpg
+    - assets/images/categories/Dairy.jpg
+    - assets/images/categories/Pens.jpg
+    - assets/images/categories/Pencil.jpg
+    - assets/images/categories/Sketch pen.jpg
+    - assets/images/categories/Compass Box.jpg
+    - assets/images/categories/Chocobar.jpg
+    - assets/images/categories/Pista.jpg
+    - assets/images/categories/Mango.jpg
+    - assets/images/categories/Vanilla.jpg
+    - assets/images/categories/Butterscotch.jpg
+    - assets/images/categories/Strawberry.jpg
+    - assets/images/categories/Chocolate.jpg
+
+
 
 
   # The following line ensures that the Material Icons font is

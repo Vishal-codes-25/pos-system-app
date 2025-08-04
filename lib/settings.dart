@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'language.dart';
+import 'sales.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -29,7 +31,7 @@ class SettingsPage extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            ...options.map((title) => _buildOptionTile(title)),
+            ...options.map((title) => _buildOptionTile(context, title)),
             const SizedBox(height: 20),
             _buildLogoutTile(),
           ],
@@ -38,7 +40,7 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildOptionTile(String title) {
+  Widget _buildOptionTile(BuildContext context, String title) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -49,7 +51,18 @@ class SettingsPage extends StatelessWidget {
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
-          // handle tap
+          if (title == 'Language') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const LanguagePage()),
+            );
+          } else if (title == 'Sales') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SalesPage()),
+            );
+          }
+          // You can add more conditions here for other options
         },
       ),
     );

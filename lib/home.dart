@@ -16,6 +16,7 @@ class HomePage extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.grey[100],
         appBar: AppBar(
+          automaticallyImplyLeading: false, // 👈 Hides the back arrow
           elevation: 0,
           backgroundColor: Colors.white,
           title: Row(
@@ -120,7 +121,7 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
-        // Removed bottomNavigationBar because you're using LayeredNavigationExample
+        // Bottom navigation handled separately in LayeredNavigationExample
       ),
     );
   }
