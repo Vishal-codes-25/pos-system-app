@@ -4,7 +4,6 @@ import 'home.dart';
 import 'settings.dart';
 import 'Cart.dart';
 import 'product.dart';
-import 'Profile.dart';
 import 'layered_nav_bar.dart'; // Main screen with nav bar
 
 void main() {

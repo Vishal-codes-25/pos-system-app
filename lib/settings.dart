@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'language.dart';
 import 'sales.dart';
+import 'profile.dart'; // Make sure this file exists and contains ProfilePage
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -61,8 +62,13 @@ class SettingsPage extends StatelessWidget {
               context,
               MaterialPageRoute(builder: (context) => const SalesPage()),
             );
+          } else if (title == 'Add Profile') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfilePage()),
+            );
           }
-          // You can add more conditions here for other options
+          // You can add more cases here if needed
         },
       ),
     );
@@ -81,7 +87,7 @@ class SettingsPage extends StatelessWidget {
         ),
         trailing: const Icon(Icons.chevron_right, color: Colors.white),
         onTap: () {
-          // handle logout
+          // handle logout logic here
         },
       ),
     );

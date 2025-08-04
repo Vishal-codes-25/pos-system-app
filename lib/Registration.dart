@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'login.dart'; // Make sure you have login.dart created
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+import 'login.dart';
 
 class RegistrationPage extends StatefulWidget {
   @override
@@ -13,6 +16,50 @@ class _RegistrationPageState extends State<RegistrationPage> {
   String password = '';
   String confirmPassword = '';
 
+  bool isLoading = false;
+
+  Future<void> _registerUser() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    // Emulator: use 10.0.2.2 instead of localhost
+    final url = Uri.parse("http://10.79.128.204/VPS2/register.php");
+
+    try {
+      final response = await http.post(url, body: {
+        'username': username,
+        'email': email,
+        'password': password,
+      });
+
+      final data = json.decode(response.body);
+
+      if (data['success']) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Registered successfully")),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Registration failed: ${data['error']}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,7 +71,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
             key: _formKey,
             child: Column(
               children: [
-                Text(
+                const Text(
                   'Register',
                   style: TextStyle(
                     fontSize: 24,
@@ -32,20 +79,21 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     color: Colors.black87,
                   ),
                 ),
-                SizedBox(height: 30),
+                const SizedBox(height: 30),
                 _buildTextField('Username'),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 _buildTextField('Email-id'),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 _buildTextField('Password', isPassword: true),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 _buildTextField('Confirm-Password', isPassword: true),
-                SizedBox(height: 30),
-                ElevatedButton(
+                const SizedBox(height: 30),
+                isLoading
+                    ? const CircularProgressIndicator()
+                    : ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
-                      print("Registered: $username, $email");
-                      // Navigate or handle registration logic
+                      _registerUser(); // call API
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -53,11 +101,11 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    padding: EdgeInsets.symmetric(horizontal: 40.0, vertical: 12.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 12.0),
                   ),
-                  child: Text('Submit'),
+                  child: const Text('Submit'),
                 ),
-                SizedBox(height: 15),
+                const SizedBox(height: 15),
                 TextButton(
                   onPressed: () {
                     Navigator.push(
@@ -68,9 +116,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   style: TextButton.styleFrom(
                     backgroundColor: Colors.brown[200],
                     foregroundColor: Colors.black,
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
-                  child: Text("already have an account"),
+                  child: const Text("already have an account"),
                 ),
               ],
             ),
