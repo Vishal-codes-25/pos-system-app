@@ -5,14 +5,16 @@ import 'Cart.dart';
 import 'settings.dart';
 
 class ProductPage extends StatefulWidget {
-  const ProductPage({Key? key}) : super(key: key);
+  final Map<String, dynamic> product;
+
+  const ProductPage({Key? key, required this.product}) : super(key: key);
 
   @override
   _ProductPageState createState() => _ProductPageState();
 }
 
 class _ProductPageState extends State<ProductPage> {
-  int _selectedIndex = 3; // This is the index for Product/Profile
+  int _selectedIndex = 3; // Product tab
 
   void _onNavTap(int index) {
     if (index == _selectedIndex) return;
@@ -31,7 +33,6 @@ class _ProductPageState extends State<ProductPage> {
             context, MaterialPageRoute(builder: (_) => CartPage()));
         break;
       case 3:
-      // Already on Product/Profile page
         break;
       case 4:
         Navigator.pushReplacement(
@@ -40,65 +41,52 @@ class _ProductPageState extends State<ProductPage> {
     }
   }
 
-  final List<Map<String, dynamic>> products = [
-    {'name': 'Parle-G', 'price': 10},
-    {'name': 'Dairy Milk', 'price': 20},
-    {'name': 'Coca-Cola', 'price': 40},
-    {'name': 'Pepsi', 'price': 40},
-    {'name': 'Bread', 'price': 25},
-    {'name': 'Butter', 'price': 45},
-    {'name': 'Notebook', 'price': 60},
-    {'name': 'Pen', 'price': 5},
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final product = widget.product;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Product Page'),
+        title: const Text('Product Details'),
         backgroundColor: Colors.brown[300],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: GridView.builder(
-          itemCount: products.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 3 / 2,
+        child: Card(
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 4,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _detailRow("Name", product['name']),
+                _detailRow("Brand", product['brand']),
+                _detailRow("Barcode", product['barcode']),
+                _detailRow("Price", "₹${product['price']}"),
+                _detailRow("Stock", product['stock'].toString()),
+                const Spacer(),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.add_shopping_cart),
+                    label: const Text("Add to Cart"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.brown[300],
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    onPressed: () {
+                      // TODO: Add to cart logic
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Added to cart")),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
-          itemBuilder: (context, index) {
-            final product = products[index];
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.brown[50],
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.brown.shade100),
-              ),
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    product['name'],
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "₹${product['price']}",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -109,9 +97,36 @@ class _ProductPageState extends State<ProductPage> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.category), label: "Categories"),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: "Cart"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart), label: "Cart"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 90,
+            child: Text(
+              "$label:",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
         ],
       ),
     );

@@ -1,66 +1,81 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'db_helper.dart';
 import 'api_service.dart';
+import 'product.dart';
 
-class ScannerPage extends StatelessWidget {
+class ScannerPage extends StatefulWidget {
   const ScannerPage({Key? key}) : super(key: key);
 
-  void _handleBarcode(BuildContext context, String barcode) async {
-    final navigator = Navigator.of(context);
+  @override
+  State<ScannerPage> createState() => _ScannerPageState();
+}
 
-    // Safe copy of context
-    final scaffoldContext = context;
+class _ScannerPageState extends State<ScannerPage> {
+  final MobileScannerController _controller = MobileScannerController();
+  bool _isProcessing = false;
 
-    // Check local DB
-    final localProduct = await DBHelper.getProduct(barcode);
-    if (localProduct != null) {
-      _showProductDialog(scaffoldContext, localProduct);
-      return;
-    }
+  Future<void> _handleBarcode(String barcode) async {
+    if (_isProcessing) return;
+    _isProcessing = true;
 
-    // Check API
-    final apiProduct = await APIService.fetchProduct(barcode);
-    if (apiProduct != null) {
-      await DBHelper.insertProduct(apiProduct);
-      _showProductDialog(scaffoldContext, apiProduct);
-    } else {
-      _showError(scaffoldContext, "Product not found.");
+    // ⛔ Stop camera while processing
+    await _controller.stop();
+
+    try {
+      // 🔥 DIRECT API CALL (XAMPP)
+      final apiProduct = await APIService.fetchProduct(barcode);
+
+      if (apiProduct != null) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProductPage(product: apiProduct),
+          ),
+        );
+      } else {
+        _showError("Product not found");
+      }
+    } catch (e) {
+      _showError("Something went wrong");
+    } finally {
+      _isProcessing = false;
+      // ▶ Resume scanning when returning
+      await _controller.start();
     }
   }
 
-  void _showProductDialog(BuildContext context, Map<String, dynamic> product) {
+  void _showError(String message) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(product['name']),
-        content: Text('Price: ₹${product['price']}'),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))],
-      ),
-    );
-  }
-
-  void _showError(BuildContext context, String message) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text("Error"),
+        title: const Text("Error"),
         content: Text(message),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
       ),
     );
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Scan Product")),
+      appBar: AppBar(title: const Text("Scan Product")),
       body: MobileScanner(
+        controller: _controller,
         onDetect: (BarcodeCapture capture) {
-          final List<Barcode> barcodes = capture.barcodes;
-          if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
-            final code = barcodes.first.rawValue!;
-            _handleBarcode(context, code);
+          final barcode = capture.barcodes.first.rawValue;
+          if (barcode != null) {
+            _handleBarcode(barcode);
           }
         },
       ),

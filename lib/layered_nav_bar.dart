@@ -18,7 +18,7 @@ class _LayeredNavigationExampleState extends State<LayeredNavigationExample> {
     HomePage(),         // index 0
     CategoriesPage(),   // index 1
     CartPage(),         // index 2
-    ProductPage(),      // index 3 - product/profile
+   // ProductPage(),      // index 3 - product/profile
     SettingsPage(),     // index 4
   ];
 
