@@ -30,7 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  mobile_scanner: ^3.5.1    # Barcode scanner plugin
+  mobile_scanner: ^5.0.0 # Barcode scanner plugin
   http: ^0.13.6                # For API
   sqflite: ^2.3.2              # Local database
   path_provider: ^2.1.1        # DB file path

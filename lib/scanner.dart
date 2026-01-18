@@ -1,83 +1,95 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'api_service.dart';
-import 'product.dart';
 
 class ScannerPage extends StatefulWidget {
-  const ScannerPage({Key? key}) : super(key: key);
+  const ScannerPage({super.key});
 
   @override
   State<ScannerPage> createState() => _ScannerPageState();
 }
 
 class _ScannerPageState extends State<ScannerPage> {
+  bool _isScanning = true;
   final MobileScannerController _controller = MobileScannerController();
-  bool _isProcessing = false;
-
-  Future<void> _handleBarcode(String barcode) async {
-    if (_isProcessing) return;
-    _isProcessing = true;
-
-    // ⛔ Stop camera while processing
-    await _controller.stop();
-
-    try {
-      // 🔥 DIRECT API CALL (XAMPP)
-      final apiProduct = await APIService.fetchProduct(barcode);
-
-      if (apiProduct != null) {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ProductPage(product: apiProduct),
-          ),
-        );
-      } else {
-        _showError("Product not found");
-      }
-    } catch (e) {
-      _showError("Something went wrong");
-    } finally {
-      _isProcessing = false;
-      // ▶ Resume scanning when returning
-      await _controller.start();
-    }
-  }
-
-  void _showError(String message) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Error"),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller.dispose(); // ✅ Prevent camera leak
     super.dispose();
+  }
+
+  void _closeScanner() {
+    if (!_isScanning) return;
+    _isScanning = false;
+    _controller.stop();
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Scan Product")),
-      body: MobileScanner(
-        controller: _controller,
-        onDetect: (BarcodeCapture capture) {
-          final barcode = capture.barcodes.first.rawValue;
-          if (barcode != null) {
-            _handleBarcode(barcode);
-          }
-        },
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: const Text('Scan Barcode'),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: _closeScanner,
+        ),
+      ),
+      body: Stack(
+        children: [
+          MobileScanner(
+            controller: _controller,
+            fit: BoxFit.cover,
+            onDetect: (BarcodeCapture capture) {
+              if (!_isScanning || !mounted) return;
+              if (capture.barcodes.isEmpty) return;
+
+              final String? code = capture.barcodes.first.rawValue;
+              if (code == null || code.isEmpty) return;
+
+              _isScanning = false;
+
+              // ✅ Stop camera immediately
+              _controller.stop();
+
+              // ✅ Return scanned barcode
+              Navigator.pop(context, code);
+            },
+          ),
+
+          // 🔲 Scan Box Overlay
+          Center(
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.greenAccent,
+                  width: 3,
+                ),
+              ),
+            ),
+          ),
+
+          // 📝 Instruction
+          const Positioned(
+            bottom: 30,
+            left: 0,
+            right: 0,
+            child: Text(
+              'Align barcode inside the box',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'Registration.dart';
-import 'home.dart';
+import 'layered_nav_bar.dart';
 import 'settings.dart';
-import 'Cart.dart';
-import 'product.dart';
-import 'layered_nav_bar.dart'; // Main screen with nav bar
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -19,14 +18,14 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.brown,
       ),
-      home: RegistrationPage(), // First screen when app launches
+
+      // 🔥 First screen
+      home: RegistrationPage(),
+
+      // ✅ Only MAIN shell routes
       routes: {
-        '/home': (context) => LayeredNavigationExample(), // ✅ main screen after login
+        '/home': (context) => LayeredNavigationExample(),
         '/settings': (context) => SettingsPage(),
-        '/cart': (context) => CartPage(),
-       // '/product': (context) => ProductPage(),
-        // Add categories if implemented later
-        // '/categories': (context) => CategoriesPage(),
       },
     );
   }
