@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home.dart';
 import 'categories.dart';
-import 'Cart.dart';
+import 'cart.dart';
 import 'settings.dart';
 
 class LayeredNavigationExample extends StatefulWidget {
@@ -16,12 +16,12 @@ class _LayeredNavigationExampleState
     extends State<LayeredNavigationExample> {
   int _selectedIndex = 0;
 
-  /// ✅ Widgets created ONCE and reused
+  /// Screens created once
   late final List<Widget> _screens = [
-    HomePage(),        // index 0
-    CategoriesPage(),  // index 1
-    CartPage(),        // index 2 ✅ SINGLE CART INSTANCE
-    SettingsPage(),    // index 3
+    HomePage(),
+    CategoriesPage(),
+    CartPage(),
+    SettingsPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -32,22 +32,29 @@ class _LayeredNavigationExampleState
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
     return Scaffold(
       extendBody: true,
+
+      /// 🔥 VERY IMPORTANT
+      resizeToAvoidBottomInset: false,
+
       body: Stack(
         children: [
-          /// 🔥 Keeps state alive (VERY IMPORTANT)
+          /// Keeps state alive
           IndexedStack(
             index: _selectedIndex,
             children: _screens,
           ),
 
-          /// 🧭 Bottom Navigation
+          /// Floating Nav (moves above keyboard)
           Positioned(
-            bottom: 16,
             left: 16,
             right: 16,
-            child: Container(
+            bottom: bottomInset > 0 ? bottomInset + 12 : 16,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
               height: 60,
               decoration: BoxDecoration(
                 color: Colors.white,
