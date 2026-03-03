@@ -1,27 +1,53 @@
-import '../services/db_service.dart';
+import '../services/firebase_service.dart';
+import '../services/openfood_service.dart';
 
 class ScanController {
-  /// Main POS scan handler
-  /// Flow:
-  /// Flutter → PHP → (DB first → OpenFoodFacts fallback)
+
+  /// 🔎 Main Scan Flow
+  /// 1️⃣ Check Firebase
+  /// 2️⃣ If not found → OpenFoodFacts
   static Future<Map<String, dynamic>?> handleScan(String barcode) async {
     try {
       if (barcode.isEmpty) return null;
 
-      final response = await DBService.fetchProduct(barcode);
+      // ===============================
+      // 1️⃣ CHECK FIRESTORE FIRST
+      // ===============================
+      final firebaseProduct =
+      await FirebaseService.fetchProduct(barcode);
 
-      if (response == null) return null;
+      if (firebaseProduct != null) {
+        return {
+          'barcode': firebaseProduct['barcode'] ?? barcode,
+          'name': firebaseProduct['name'] ?? 'Unknown Product',
+          'brand': firebaseProduct['brand'] ?? 'Unknown',
+          'price': _toDouble(firebaseProduct['price']),
+          'stock': _toInt(firebaseProduct['stock']),
+          'source': 'firebase',
+        };
+      }
 
-      return {
-        'barcode': response['barcode'] ?? barcode,
-        'name': response['name'] ?? 'Unknown Product',
-        'brand': response['brand'] ?? 'Unknown',
-        'price': _toDouble(response['price']),
-        'stock': _toInt(response['stock']),
-        'source': response['source'] ?? 'database',
-      };
+      // ===============================
+      // 2️⃣ IF NOT FOUND → CALL API
+      // ===============================
+      final apiProduct =
+      await OpenFoodService.fetchFromAPI(barcode);
+
+      if (apiProduct != null) {
+        return {
+          'barcode': apiProduct['barcode'] ?? barcode,
+          'name': apiProduct['name'] ?? 'Unknown Product',
+          'brand': apiProduct['brand'] ?? 'Unknown',
+          'price': _toDouble(apiProduct['price']),
+          'stock': _toInt(apiProduct['stock']),
+          'source': 'api',
+        };
+      }
+
+      // ❌ Not found anywhere
+      return null;
+
     } catch (e) {
-      // ignore: avoid_print
       print('ScanController error: $e');
       return null;
     }
@@ -37,8 +63,8 @@ class ScanController {
 
   static int _toInt(dynamic value) {
     if (value is int) return value;
-    if (value is String) return int.tryParse(value) ?? 0;
     if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
     return 0;
   }
 }

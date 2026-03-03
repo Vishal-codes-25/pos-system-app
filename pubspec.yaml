@@ -33,8 +33,9 @@ dependencies:
   mobile_scanner: ^5.0.0 # Barcode scanner plugin
   http: ^0.13.6                # For API
   sqflite: ^2.3.2              # Local database
-  path_provider: ^2.1.1        # DB file path
-
+  path_provider: ^2.1.1       # DB file path
+  firebase_core: ^2.25.4
+  cloud_firestore: ^4.15.4
 
 
   # The following adds the Cupertino Icons font to your application.

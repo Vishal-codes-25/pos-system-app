@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "765028769148",
+    "project_id": "pos-app-205f7",
+    "storage_bucket": "pos-app-205f7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:765028769148:android:3ba4f5e045f7b53f2bd8f9",
+        "android_client_info": {
+          "package_name": "com.example.pos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBlnHG7oa_LHD63xUG_xDMDJvDC2sE7cB8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

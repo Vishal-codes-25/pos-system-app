@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// ================== CART ITEM MODEL ==================
 
@@ -24,16 +25,15 @@ class CartPage extends StatefulWidget {
   const CartPage({super.key});
 
   static final List<CartItem> cartItems = [];
-  static final ValueNotifier<int> cartNotifier = ValueNotifier<int>(0);
+  static final ValueNotifier<int> cartRefresh = ValueNotifier<int>(0);
 
   static void addToCart(Map<String, dynamic> product) {
     if (product['barcode'] == null ||
         product['name'] == null ||
         product['price'] == null) return;
 
-    final index = cartItems.indexWhere(
-          (item) => item.barcode == product['barcode'],
-    );
+    final index =
+    cartItems.indexWhere((item) => item.barcode == product['barcode']);
 
     if (index >= 0) {
       cartItems[index].quantity++;
@@ -47,12 +47,12 @@ class CartPage extends StatefulWidget {
       );
     }
 
-    cartNotifier.value++;
+    cartRefresh.value++;
   }
 
   static void increaseQty(int index) {
     cartItems[index].quantity++;
-    cartNotifier.value++;
+    cartRefresh.value++;
   }
 
   static void decreaseQty(int index) {
@@ -61,12 +61,17 @@ class CartPage extends StatefulWidget {
     } else {
       cartItems.removeAt(index);
     }
-    cartNotifier.value++;
+    cartRefresh.value++;
   }
 
   static void removeItem(int index) {
     cartItems.removeAt(index);
-    cartNotifier.value++;
+    cartRefresh.value++;
+  }
+
+  static void clearCart() {
+    cartItems.clear();
+    cartRefresh.value++;
   }
 
   @override
@@ -76,19 +81,67 @@ class CartPage extends StatefulWidget {
 /// ================== CART UI ==================
 
 class _CartPageState extends State<CartPage> {
-  int get totalPrice => CartPage.cartItems.fold(
-    0,
-        (sum, item) => sum + item.total.round(),
-  );
+  final TextEditingController _cashController = TextEditingController();
 
-  static const double _navBarSpace = 90; // height for layered nav
+  double get totalPrice =>
+      CartPage.cartItems.fold(0, (sum, item) => sum + item.total);
+
+  double get cashReceived =>
+      double.tryParse(_cashController.text.trim()) ?? 0;
+
+  double get change => cashReceived - totalPrice;
+
+  Future<void> confirmSale() async {
+    if (CartPage.cartItems.isEmpty) {
+      _showMessage("Cart is empty");
+      return;
+    }
+
+    if (cashReceived < totalPrice) {
+      _showMessage("Cash is less than total amount");
+      return;
+    }
+
+    try {
+      final saleData = {
+        "date": Timestamp.now(),
+        "totalAmount": totalPrice,
+        "cashReceived": cashReceived,
+        "change": change,
+        "items": CartPage.cartItems.map((item) => {
+          "barcode": item.barcode,
+          "name": item.name,
+          "price": item.price,
+          "quantity": item.quantity,
+          "subtotal": item.total,
+        }).toList(),
+      };
+
+      await FirebaseFirestore.instance
+          .collection("sales")
+          .add(saleData);
+
+      // ✅ Proper Clear After Frame
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        CartPage.clearCart();
+        _cashController.clear();
+      });
+
+      _showMessage("Sale Completed Successfully ✅");
+    } catch (e) {
+      _showMessage("Error saving sale");
+    }
+  }
+
+  void _showMessage(String msg) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-
-      /// ❌ NO BACK BUTTON (important)
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
@@ -98,16 +151,14 @@ class _CartPageState extends State<CartPage> {
           style: TextStyle(color: Colors.black),
         ),
       ),
-
       body: SafeArea(
         child: ValueListenableBuilder(
-          valueListenable: CartPage.cartNotifier,
-          builder: (_, __, ___) {
+          valueListenable: CartPage.cartRefresh,
+          builder: (context, _, __) {
             final cartItems = CartPage.cartItems;
 
             return Column(
               children: [
-                /// 🧾 CART ITEMS
                 Expanded(
                   child: cartItems.isEmpty
                       ? const Center(
@@ -118,38 +169,57 @@ class _CartPageState extends State<CartPage> {
                     ),
                   )
                       : ListView.builder(
-                    padding: const EdgeInsets.only(
-                      bottom: _navBarSpace,
-                    ),
                     itemCount: cartItems.length,
                     itemBuilder: (_, index) =>
                         _buildCartItem(cartItems[index], index),
                   ),
                 ),
 
-                /// 💰 TOTAL BAR (STICKY)
                 Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  margin: const EdgeInsets.only(bottom: _navBarSpace),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     border: Border(
                       top: BorderSide(color: Colors.black12),
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
                     children: [
-                      const Text(
-                        "Total",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                      _buildRow("Total", totalPrice),
+                      const SizedBox(height: 8),
+
+                      TextField(
+                        controller: _cashController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: "Cash Received",
+                          prefixText: "₹ ",
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged: (_) => setState(() {}),
                       ),
-                      Text(
-                        "₹$totalPrice",
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+
+                      const SizedBox(height: 8),
+                      _buildRow(
+                          "Change", change < 0 ? 0 : change),
+
+                      const SizedBox(height: 12),
+
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: confirmSale,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 14),
+                          ),
+                          child: const Text(
+                            "CONFIRM SALE",
+                            style:
+                            TextStyle(fontSize: 16),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -162,65 +232,87 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  /// ================== CART ITEM TILE ==================
+  Widget _buildRow(String title, double amount) {
+    return Row(
+      mainAxisAlignment:
+      MainAxisAlignment.spaceBetween,
+      children: [
+        Text(title,
+            style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold)),
+        Text("₹${amount.toStringAsFixed(2)}",
+            style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
 
   Widget _buildCartItem(CartItem item, int index) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+          horizontal: 12, vertical: 6),
       child: Card(
-        elevation: 1,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+            borderRadius:
+            BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              /// NAME + PRICE
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      item.name,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
+                    Text(item.name,
+                        style: const TextStyle(
+                            fontWeight:
+                            FontWeight.bold,
+                            fontSize: 16)),
                     const SizedBox(height: 4),
-                    Text('₹${item.price.toStringAsFixed(2)}'),
+                    Text(
+                        '₹${item.price.toStringAsFixed(2)}'),
                   ],
                 ),
               ),
-
-              /// QTY CONTROLS
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.remove_circle_outline),
-                    onPressed: () => CartPage.decreaseQty(index),
+                    icon: const Icon(Icons
+                        .remove_circle_outline),
+                    onPressed: () =>
+                        CartPage.decreaseQty(
+                            index),
                   ),
-                  Text(
-                    '${item.quantity}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  Text('${item.quantity}',
+                      style: const TextStyle(
+                          fontWeight:
+                          FontWeight.bold)),
                   IconButton(
-                    icon: const Icon(Icons.add_circle_outline),
-                    onPressed: () => CartPage.increaseQty(index),
+                    icon: const Icon(Icons
+                        .add_circle_outline),
+                    onPressed: () =>
+                        CartPage.increaseQty(
+                            index),
                   ),
                 ],
               ),
-
-              /// ITEM TOTAL + REMOVE
               Column(
                 children: [
                   Text(
-                    '₹${item.total.toStringAsFixed(0)}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                      '₹${item.total.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                          fontWeight:
+                          FontWeight.bold)),
                   IconButton(
-                    icon:
-                    const Icon(Icons.close, color: Colors.red, size: 20),
-                    onPressed: () => CartPage.removeItem(index),
+                    icon: const Icon(Icons.close,
+                        color: Colors.red,
+                        size: 20),
+                    onPressed: () =>
+                        CartPage.removeItem(
+                            index),
                   ),
                 ],
               ),
