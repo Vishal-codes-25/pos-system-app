@@ -21,30 +21,34 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFdff6fd),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Text(
-          'Settings',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        iconTheme: const IconThemeData(color: Colors.black),
-        elevation: 0,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            ...options.map(
-                  (title) => _buildOptionTile(context, title),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(), // 🔥 CLOSE KEYBOARD
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        backgroundColor: const Color(0xFFdff6fd),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          title: const Text(
+            'Settings',
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 20),
-            _buildLogoutTile(context),
-          ],
+          ),
+          iconTheme: const IconThemeData(color: Colors.black),
+          elevation: 0,
+        ),
+        body: SingleChildScrollView( // 🔥 Prevent overflow
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              ...options.map(
+                    (title) => _buildOptionTile(context, title),
+              ),
+              const SizedBox(height: 20),
+              _buildLogoutTile(context),
+            ],
+          ),
         ),
       ),
     );
@@ -67,13 +71,14 @@ class SettingsPage extends StatelessWidget {
         ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
+          FocusScope.of(context).unfocus(); // 🔥 IMPORTANT
+
           switch (title) {
             case 'Language':
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                  const LanguagePage(),
+                  builder: (_) => const LanguagePage(),
                 ),
               );
               break;
@@ -82,8 +87,7 @@ class SettingsPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                  const PrivacyPolicyPage(),
+                  builder: (_) => const PrivacyPolicyPage(),
                 ),
               );
               break;
@@ -123,8 +127,6 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  /// 🔥 WORKING FIREBASE LOGOUT
-
   Widget _buildLogoutTile(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -144,6 +146,8 @@ class SettingsPage extends StatelessWidget {
           color: Colors.white,
         ),
         onTap: () async {
+          FocusScope.of(context).unfocus(); // 🔥 CLOSE KEYBOARD
+
           bool? confirm = await showDialog(
             context: context,
             builder: (context) => AlertDialog(
@@ -161,7 +165,8 @@ class SettingsPage extends StatelessWidget {
                       Navigator.pop(context, true),
                   child: const Text(
                     "Logout",
-                    style: TextStyle(color: Colors.red),
+                    style:
+                    TextStyle(color: Colors.red),
                   ),
                 ),
               ],

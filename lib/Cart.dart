@@ -83,6 +83,7 @@ class CartPage extends StatefulWidget {
 
 class _CartPageState extends State<CartPage> {
   final TextEditingController _cashController = TextEditingController();
+  final FocusNode _cashFocusNode = FocusNode();
 
   double get totalPrice =>
       CartPage.cartItems.fold(0, (sum, item) => sum + item.total);
@@ -93,6 +94,8 @@ class _CartPageState extends State<CartPage> {
   double get change => cashReceived - totalPrice;
 
   Future<void> confirmSale() async {
+    FocusScope.of(context).unfocus(); // 🔥 CLOSE KEYBOARD
+
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
@@ -112,7 +115,7 @@ class _CartPageState extends State<CartPage> {
 
     try {
       final saleData = {
-        "userId": user.uid, // 🔥 IMPORTANT FOR ACCOUNT-WISE DATA
+        "userId": user.uid,
         "date": Timestamp.now(),
         "totalAmount": totalPrice,
         "cashReceived": cashReceived,
@@ -130,10 +133,8 @@ class _CartPageState extends State<CartPage> {
           .collection("sales")
           .add(saleData);
 
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        CartPage.clearCart();
-        _cashController.clear();
-      });
+      CartPage.clearCart();
+      _cashController.clear();
 
       _showMessage("Sale Completed Successfully ✅");
     } catch (e) {
@@ -149,91 +150,99 @@ class _CartPageState extends State<CartPage> {
   @override
   void dispose() {
     _cashController.dispose();
+    _cashFocusNode.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          'My Cart',
-          style: TextStyle(color: Colors.black),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(), // 🔥 TAP OUTSIDE CLOSES
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        backgroundColor: Colors.grey[100],
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          title: const Text(
+            'My Cart',
+            style: TextStyle(color: Colors.black),
+          ),
         ),
-      ),
-      body: SafeArea(
-        child: ValueListenableBuilder(
-          valueListenable: CartPage.cartRefresh,
-          builder: (context, _, __) {
-            final cartItems = CartPage.cartItems;
+        body: SafeArea(
+          child: ValueListenableBuilder(
+            valueListenable: CartPage.cartRefresh,
+            builder: (context, _, __) {
+              final cartItems = CartPage.cartItems;
 
-            return Column(
-              children: [
-                Expanded(
-                  child: cartItems.isEmpty
-                      ? const Center(
-                    child: Text(
-                      'Your cart is empty',
-                      style: TextStyle(
-                          fontSize: 18, color: Colors.grey),
-                    ),
-                  )
-                      : ListView.builder(
-                    itemCount: cartItems.length,
-                    itemBuilder: (_, index) =>
-                        _buildCartItem(cartItems[index], index),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(
-                      top: BorderSide(color: Colors.black12),
+              return Column(
+                children: [
+                  Expanded(
+                    child: cartItems.isEmpty
+                        ? const Center(
+                      child: Text(
+                        'Your cart is empty',
+                        style: TextStyle(
+                            fontSize: 18, color: Colors.grey),
+                      ),
+                    )
+                        : ListView.builder(
+                      itemCount: cartItems.length,
+                      itemBuilder: (_, index) =>
+                          _buildCartItem(cartItems[index], index),
                     ),
                   ),
-                  child: Column(
-                    children: [
-                      _buildRow("Total", totalPrice),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _cashController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: "Cash Received",
-                          prefixText: "₹ ",
-                          border: OutlineInputBorder(),
-                        ),
-                        onChanged: (_) => setState(() {}),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      border: Border(
+                        top: BorderSide(color: Colors.black12),
                       ),
-                      const SizedBox(height: 8),
-                      _buildRow("Change", change < 0 ? 0 : change),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: confirmSale,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 14),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildRow("Total", totalPrice),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _cashController,
+                          focusNode: _cashFocusNode,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: "Cash Received",
+                            prefixText: "₹ ",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
-                          child: const Text(
-                            "CONFIRM SALE",
-                            style: TextStyle(fontSize: 16),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildRow("Change", change < 0 ? 0 : change),
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: confirmSale,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 14),
+                            ),
+                            child: const Text(
+                              "CONFIRM SALE",
+                              style: TextStyle(fontSize: 16),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
