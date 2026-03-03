@@ -1,72 +1,130 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class LanguagePage extends StatelessWidget {
+class LanguagePage extends StatefulWidget {
   const LanguagePage({super.key});
+
+  @override
+  State<LanguagePage> createState() =>
+      _LanguagePageState();
+}
+
+class _LanguagePageState
+    extends State<LanguagePage> {
+  String selectedLanguage = "English";
+
+  final List<String> languages = [
+    "English",
+    "Hindi",
+    "Marathi",
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLanguage();
+  }
+
+  Future<void> _loadLanguage() async {
+    final prefs =
+    await SharedPreferences.getInstance();
+    setState(() {
+      selectedLanguage =
+          prefs.getString("language") ??
+              "English";
+    });
+  }
+
+  Future<void> _changeLanguage(
+      String language) async {
+    final prefs =
+    await SharedPreferences.getInstance();
+    await prefs.setString(
+        "language", language);
+
+    setState(() {
+      selectedLanguage = language;
+    });
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+      SnackBar(
+        content:
+        Text("$language selected"),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFC5F2F3), // Light teal background
+      backgroundColor:
+      const Color(0xFFC5F2F3),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+        title: const Text(
+          'Language',
+          style:
+          TextStyle(color: Colors.black),
         ),
-        title: const Text('Language', style: TextStyle(color: Colors.black)),
         centerTitle: true,
+        iconTheme:
+        const IconThemeData(
+            color: Colors.black),
       ),
       body: Column(
         children: [
           const SizedBox(height: 20),
-          buildLanguageTile(context, 'English'),
-          buildLanguageTile(context, 'Hindi'),
-          buildLanguageTile(context, 'Marathi'),
-          const Spacer(),
-          // Gift Image
-          Image.asset(
-            'assets/gifts.png', // Replace with your asset path
-            height: 100,
+
+          /// Language List
+          ...languages.map(
+                (language) =>
+                _buildLanguageTile(
+                    language),
           ),
-          const SizedBox(height: 10),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.black54,
-        currentIndex: 4, // Change index according to current tab
-        onTap: (index) {
-          // Handle navigation here
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.category), label: 'Categories'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Cart'),
-          BottomNavigationBarItem(icon: Icon(Icons.card_giftcard), label: 'Product'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+
+          const Spacer(),
+
+          const SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  Widget buildLanguageTile(BuildContext context, String language) {
+  Widget _buildLanguageTile(
+      String language) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding:
+      const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 8),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius:
+          BorderRadius.circular(
+              12),
         ),
-        child: ListTile(
-          title: Text(language, style: const TextStyle(fontWeight: FontWeight.bold)),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () {
-            // Handle language change or navigation
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('$language selected')),
-            );
+        child: RadioListTile<String>(
+          title: Text(
+            language,
+            style:
+            const TextStyle(
+              fontWeight:
+              FontWeight.bold,
+            ),
+          ),
+          value: language,
+          groupValue:
+          selectedLanguage,
+          activeColor:
+          Colors.brown,
+          onChanged: (value) {
+            if (value != null) {
+              _changeLanguage(
+                  value);
+            }
           },
         ),
       ),

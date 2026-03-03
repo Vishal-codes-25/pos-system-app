@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'language.dart';
-import 'sales.dart';
-import 'profile.dart'; // Make sure this file exists and contains ProfilePage
+import 'profile.dart';
+import 'privacy_policy.dart';
+import 'password_security.dart';
+import 'terms_conditions.dart';
+import 'login.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -10,9 +15,8 @@ class SettingsPage extends StatelessWidget {
     'Language',
     'Privacy Policy',
     'Password & Security',
-    'Sales',
     'Terms & Conditions',
-    'Add Profile',
+    'Profile',
   ];
 
   @override
@@ -23,25 +27,31 @@ class SettingsPage extends StatelessWidget {
         backgroundColor: Colors.white,
         title: const Text(
           'Settings',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        leading: const Icon(Icons.arrow_back, color: Colors.black),
+        iconTheme: const IconThemeData(color: Colors.black),
         elevation: 0,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            ...options.map((title) => _buildOptionTile(context, title)),
+            ...options.map(
+                  (title) => _buildOptionTile(context, title),
+            ),
             const SizedBox(height: 20),
-            _buildLogoutTile(),
+            _buildLogoutTile(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildOptionTile(BuildContext context, String title) {
+  Widget _buildOptionTile(
+      BuildContext context, String title) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -49,32 +59,73 @@ class SettingsPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: ListTile(
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
-          if (title == 'Language') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const LanguagePage()),
-            );
-          } else if (title == 'Sales') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SalesPage()),
-            );
-          } else if (title == 'Add Profile') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfilePage()),
-            );
+          switch (title) {
+            case 'Language':
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                  const LanguagePage(),
+                ),
+              );
+              break;
+
+            case 'Privacy Policy':
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                  const PrivacyPolicyPage(),
+                ),
+              );
+              break;
+
+            case 'Password & Security':
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                  const PasswordSecurityPage(),
+                ),
+              );
+              break;
+
+            case 'Terms & Conditions':
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                  const TermsConditionsPage(),
+                ),
+              );
+              break;
+
+            case 'Profile':
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                  const ProfilePage(),
+                ),
+              );
+              break;
           }
-          // You can add more cases here if needed
         },
       ),
     );
   }
 
-  Widget _buildLogoutTile() {
+  /// 🔥 WORKING FIREBASE LOGOUT
+
+  Widget _buildLogoutTile(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.redAccent,
@@ -83,11 +134,52 @@ class SettingsPage extends StatelessWidget {
       child: ListTile(
         title: const Text(
           'Logout',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        trailing: const Icon(Icons.chevron_right, color: Colors.white),
-        onTap: () {
-          // handle logout logic here
+        trailing: const Icon(
+          Icons.chevron_right,
+          color: Colors.white,
+        ),
+        onTap: () async {
+          bool? confirm = await showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text("Confirm Logout"),
+              content: const Text(
+                  "Are you sure you want to logout?"),
+              actions: [
+                TextButton(
+                  onPressed: () =>
+                      Navigator.pop(context, false),
+                  child: const Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      Navigator.pop(context, true),
+                  child: const Text(
+                    "Logout",
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
+            ),
+          );
+
+          if (confirm == true) {
+            await FirebaseAuth.instance.signOut();
+
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                const LoginPage(),
+              ),
+                  (route) => false,
+            );
+          }
         },
       ),
     );
