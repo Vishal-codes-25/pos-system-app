@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 /// ================== CART ITEM MODEL ==================
 
@@ -92,6 +93,13 @@ class _CartPageState extends State<CartPage> {
   double get change => cashReceived - totalPrice;
 
   Future<void> confirmSale() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      _showMessage("User not logged in");
+      return;
+    }
+
     if (CartPage.cartItems.isEmpty) {
       _showMessage("Cart is empty");
       return;
@@ -104,6 +112,7 @@ class _CartPageState extends State<CartPage> {
 
     try {
       final saleData = {
+        "userId": user.uid, // 🔥 IMPORTANT FOR ACCOUNT-WISE DATA
         "date": Timestamp.now(),
         "totalAmount": totalPrice,
         "cashReceived": cashReceived,
@@ -121,7 +130,6 @@ class _CartPageState extends State<CartPage> {
           .collection("sales")
           .add(saleData);
 
-      // ✅ Proper Clear After Frame
       WidgetsBinding.instance.addPostFrameCallback((_) {
         CartPage.clearCart();
         _cashController.clear();
@@ -136,6 +144,12 @@ class _CartPageState extends State<CartPage> {
   void _showMessage(String msg) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  @override
+  void dispose() {
+    _cashController.dispose();
+    super.dispose();
   }
 
   @override
@@ -174,7 +188,6 @@ class _CartPageState extends State<CartPage> {
                         _buildCartItem(cartItems[index], index),
                   ),
                 ),
-
                 Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 12),
@@ -188,7 +201,6 @@ class _CartPageState extends State<CartPage> {
                     children: [
                       _buildRow("Total", totalPrice),
                       const SizedBox(height: 8),
-
                       TextField(
                         controller: _cashController,
                         keyboardType: TextInputType.number,
@@ -199,13 +211,9 @@ class _CartPageState extends State<CartPage> {
                         ),
                         onChanged: (_) => setState(() {}),
                       ),
-
                       const SizedBox(height: 8),
-                      _buildRow(
-                          "Change", change < 0 ? 0 : change),
-
+                      _buildRow("Change", change < 0 ? 0 : change),
                       const SizedBox(height: 12),
-
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -216,8 +224,7 @@ class _CartPageState extends State<CartPage> {
                           ),
                           child: const Text(
                             "CONFIRM SALE",
-                            style:
-                            TextStyle(fontSize: 16),
+                            style: TextStyle(fontSize: 16),
                           ),
                         ),
                       ),
@@ -283,8 +290,7 @@ class _CartPageState extends State<CartPage> {
                     icon: const Icon(Icons
                         .remove_circle_outline),
                     onPressed: () =>
-                        CartPage.decreaseQty(
-                            index),
+                        CartPage.decreaseQty(index),
                   ),
                   Text('${item.quantity}',
                       style: const TextStyle(
@@ -294,8 +300,7 @@ class _CartPageState extends State<CartPage> {
                     icon: const Icon(Icons
                         .add_circle_outline),
                     onPressed: () =>
-                        CartPage.increaseQty(
-                            index),
+                        CartPage.increaseQty(index),
                   ),
                 ],
               ),
@@ -311,8 +316,7 @@ class _CartPageState extends State<CartPage> {
                         color: Colors.red,
                         size: 20),
                     onPressed: () =>
-                        CartPage.removeItem(
-                            index),
+                        CartPage.removeItem(index),
                   ),
                 ],
               ),

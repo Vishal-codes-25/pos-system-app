@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'sale_details_page.dart';
 
 class SalesDashboardPage extends StatelessWidget {
@@ -7,6 +8,14 @@ class SalesDashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: Text("User not logged in")),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: _buildAppBar(),
@@ -14,11 +23,41 @@ class SalesDashboardPage extends StatelessWidget {
         child: StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('sales')
+              .where('userId', isEqualTo: user.uid)
               .orderBy('date', descending: true)
               .snapshots(),
           builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
+
+            /// 🔴 SHOW ERROR IF INDEX MISSING
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    "Error:\n${snapshot.error}",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              );
+            }
+
+            /// ⏳ LOADING
+            if (snapshot.connectionState ==
+                ConnectionState.waiting) {
+              return const Center(
+                  child: CircularProgressIndicator());
+            }
+
+            /// 📭 EMPTY DATA
+            if (!snapshot.hasData ||
+                snapshot.data!.docs.isEmpty) {
+              return const Center(
+                child: Text(
+                  "No sales yet",
+                  style: TextStyle(fontSize: 16),
+                ),
+              );
             }
 
             final sales = snapshot.data!.docs;
@@ -30,9 +69,18 @@ class SalesDashboardPage extends StatelessWidget {
             double yearlyTotal = 0;
 
             for (var doc in sales) {
-              final data = doc.data() as Map<String, dynamic>;
-              final amount = (data['totalAmount'] ?? 0).toDouble();
-              final date = (data['date'] as Timestamp).toDate();
+              final data =
+              doc.data() as Map<String, dynamic>;
+
+              final amount =
+              (data['totalAmount'] ?? 0)
+                  .toDouble();
+
+              if (data['date'] == null) continue;
+
+              final date =
+              (data['date'] as Timestamp)
+                  .toDate();
 
               if (_isSameDay(date, now)) {
                 todayTotal += amount;
@@ -42,7 +90,8 @@ class SalesDashboardPage extends StatelessWidget {
                 weeklyTotal += amount;
               }
 
-              if (date.month == now.month && date.year == now.year) {
+              if (date.month == now.month &&
+                  date.year == now.year) {
                 monthlyTotal += amount;
               }
 
@@ -55,7 +104,11 @@ class SalesDashboardPage extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               children: [
                 _buildSalesCards(
-                    todayTotal, weeklyTotal, monthlyTotal, yearlyTotal),
+                  todayTotal,
+                  weeklyTotal,
+                  monthlyTotal,
+                  yearlyTotal,
+                ),
                 const SizedBox(height: 20),
                 _buildOrderSummary(sales.length),
                 const SizedBox(height: 20),
@@ -75,7 +128,9 @@ class SalesDashboardPage extends StatelessWidget {
       title: const Text(
         "Sales Dashboard",
         style: TextStyle(
-            color: Colors.black, fontWeight: FontWeight.w600),
+          color: Colors.black,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -90,17 +145,28 @@ class SalesDashboardPage extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: SalesCard(title: "Today", amount: today)),
+            Expanded(
+                child: SalesCard(
+                    title: "Today", amount: today)),
             const SizedBox(width: 12),
-            Expanded(child: SalesCard(title: "Weekly", amount: weekly)),
+            Expanded(
+                child: SalesCard(
+                    title: "Weekly",
+                    amount: weekly)),
           ],
         ),
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: SalesCard(title: "Monthly", amount: monthly)),
+            Expanded(
+                child: SalesCard(
+                    title: "Monthly",
+                    amount: monthly)),
             const SizedBox(width: 12),
-            Expanded(child: SalesCard(title: "Yearly", amount: yearly)),
+            Expanded(
+                child: SalesCard(
+                    title: "Yearly",
+                    amount: yearly)),
           ],
         ),
       ],
@@ -115,17 +181,21 @@ class SalesDashboardPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment:
+        MainAxisAlignment.spaceBetween,
         children: [
           Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
             children: [
               const Text("Total Orders"),
               const SizedBox(height: 5),
               Text(
                 totalOrders.toString(),
                 style: const TextStyle(
-                    fontSize: 22, fontWeight: FontWeight.bold),
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -136,37 +206,49 @@ class SalesDashboardPage extends StatelessWidget {
     );
   }
 
-  // 🔥 UPDATED TRANSACTIONS SECTION
   Widget _buildRecentTransactions(
       BuildContext context,
       List<QueryDocumentSnapshot> sales,
       ) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
       children: [
         const Text(
           "Recent Transactions",
-          style:
-          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         ...sales.take(5).map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          final amount = data['totalAmount'] ?? 0;
+          final data =
+          doc.data() as Map<String, dynamic>;
+
+          final amount =
+          (data['totalAmount'] ?? 0)
+              .toDouble();
+
           final date =
-          (data['date'] as Timestamp).toDate();
-          final items = data['items'] as List;
+          (data['date'] as Timestamp)
+              .toDate();
+
+          final items =
+              data['items'] as List? ?? [];
 
           return Container(
-            margin: const EdgeInsets.only(bottom: 10),
+            margin:
+            const EdgeInsets.only(bottom: 10),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius:
+              BorderRadius.circular(12),
               boxShadow: const [
                 BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 5,
-                    offset: Offset(0, 3))
+                  color: Colors.black12,
+                  blurRadius: 5,
+                  offset: Offset(0, 3),
+                )
               ],
             ),
             child: ListTile(
@@ -174,24 +256,28 @@ class SalesDashboardPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => SaleDetailsPage(
-                      saleData: data,
-                    ),
+                    builder: (_) =>
+                        SaleDetailsPage(
+                          saleData: data,
+                        ),
                   ),
                 );
               },
               title: Text(
                 "Sale - ${date.day}/${date.month}/${date.year}",
                 style: const TextStyle(
-                    fontWeight: FontWeight.w600),
+                    fontWeight:
+                    FontWeight.w600),
               ),
               subtitle:
               Text("${items.length} Items"),
               trailing: Text(
                 "₹ ${amount.toStringAsFixed(0)}",
                 style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.brown),
+                  fontWeight:
+                  FontWeight.bold,
+                  color: Colors.brown,
+                ),
               ),
             ),
           );
@@ -200,7 +286,8 @@ class SalesDashboardPage extends StatelessWidget {
     );
   }
 
-  static bool _isSameDay(DateTime a, DateTime b) {
+  static bool _isSameDay(
+      DateTime a, DateTime b) {
     return a.year == b.year &&
         a.month == b.month &&
         a.day == b.day;
@@ -211,23 +298,27 @@ class SalesCard extends StatelessWidget {
   final String title;
   final double amount;
 
-  const SalesCard(
-      {super.key,
-        required this.title,
-        required this.amount});
+  const SalesCard({
+    super.key,
+    required this.title,
+    required this.amount,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding:
+      const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius:
+        BorderRadius.circular(15),
         boxShadow: const [
           BoxShadow(
-              color: Colors.black12,
-              blurRadius: 6,
-              offset: Offset(0, 4))
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: Offset(0, 4),
+          )
         ],
       ),
       child: Column(
@@ -237,9 +328,11 @@ class SalesCard extends StatelessWidget {
           Text(
             "₹ ${amount.toStringAsFixed(0)}",
             style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.brown),
+              fontSize: 20,
+              fontWeight:
+              FontWeight.bold,
+              color: Colors.brown,
+            ),
           ),
         ],
       ),
