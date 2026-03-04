@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'scanner.dart';
 import 'cart.dart';
 import 'controllers/scan_controller.dart';
@@ -16,11 +17,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // ================== SCANNER ==================
 
   Future<void> openScanner() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _auth.currentUser;
     if (user == null) return;
 
     final barcode = await Navigator.push(
@@ -28,9 +31,13 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(builder: (_) => const ScannerPage()),
     );
 
+    if (!mounted) return;
     if (barcode == null || barcode.toString().isEmpty) return;
 
-    final product = await ScanController.handleScan(barcode);
+    Map<String, dynamic>? product =
+    await ScanController.handleScan(barcode);
+
+    if (!mounted) return;
 
     if (product == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -39,43 +46,50 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    // 🔥 CHECK IF PRODUCT ALREADY EXISTS IN FIRESTORE
-    final existing = await FirebaseFirestore.instance
+    // 🔍 Check if product exists in Firestore
+    final existing = await _firestore
         .collection('products')
         .where('barcode', isEqualTo: barcode)
         .where('userId', isEqualTo: user.uid)
+        .limit(1)
         .get();
 
-    // 🔥 IF API PRODUCT AND NOT IN DB → SHOW POPUP
-    if ((product['source'] ?? 'database') == 'api' &&
-        existing.docs.isEmpty) {
+    if (existing.docs.isNotEmpty) {
+      // ✅ Use saved DB product
+      product = existing.docs.first.data();
+    } else {
+      // 🆕 If API product → confirm and save
+      if ((product['source'] ?? 'database') == 'api') {
+        final updated =
+        await _showProductDialog(product);
+        if (!mounted || updated == null) return;
 
-      final updatedProduct = await _showProductDialog(product);
-      if (updatedProduct == null) return;
+        product = {
+          'name': updated['name'],
+          'brand': updated['brand'],
+          'price': updated['price'],
+          'barcode': barcode,
+          'userId': user.uid,
+          'createdAt': Timestamp.now(),
+        };
 
-      product
-        ..['name'] = updatedProduct['name']
-        ..['brand'] = updatedProduct['brand']
-        ..['price'] = updatedProduct['price']
-        ..['barcode'] = barcode
-        ..['userId'] = user.uid
-        ..['createdAt'] = Timestamp.now();
+        await _firestore.collection('products').add(product);
 
-      await FirebaseFirestore.instance
-          .collection('products')
-          .add(product);
+        if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('New product saved')),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('New product saved')),
+        );
+      }
     }
 
     // 🔒 Ensure price is double
     if (product['price'] != null) {
-      product['price'] = (product['price'] as num).toDouble();
+      product['price'] =
+          (product['price'] as num).toDouble();
     }
 
-    // ✅ ADD TO CART
+    // ✅ Add to cart
     CartPage.addToCart(product);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -85,16 +99,13 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
-    Future.microtask(() {
-      widget.onGoToCart();
-    });
+    widget.onGoToCart();
   }
 
   // ================== PRODUCT CONFIRM POPUP ==================
 
   Future<Map<String, dynamic>?> _showProductDialog(
       Map<String, dynamic> product) async {
-
     final nameController =
     TextEditingController(text: product['name'] ?? '');
 
@@ -102,7 +113,8 @@ class _HomePageState extends State<HomePage> {
     TextEditingController(text: product['brand'] ?? '');
 
     final priceController = TextEditingController(
-      text: (product['price'] != null && product['price'] > 0)
+      text: (product['price'] != null &&
+          product['price'] > 0)
           ? product['price'].toString()
           : '',
     );
@@ -117,44 +129,44 @@ class _HomePageState extends State<HomePage> {
           ),
           title: const Text(
             'Confirm New Product',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style:
+            TextStyle(fontWeight: FontWeight.bold),
           ),
           content: SingleChildScrollView(
             child: Column(
               children: [
-
                 TextField(
                   controller: nameController,
                   decoration: InputDecoration(
                     labelText: 'Product Name',
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius:
+                      BorderRadius.circular(12),
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 15),
-
                 TextField(
                   controller: brandController,
                   decoration: InputDecoration(
                     labelText: 'Brand',
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius:
+                      BorderRadius.circular(12),
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 15),
-
                 TextField(
                   controller: priceController,
-                  keyboardType: TextInputType.number,
+                  keyboardType:
+                  TextInputType.number,
                   decoration: InputDecoration(
                     labelText: 'Price',
                     prefixText: '₹ ',
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius:
+                      BorderRadius.circular(12),
                     ),
                   ),
                 ),
@@ -162,38 +174,41 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           actions: [
-
             TextButton(
-              onPressed: () => Navigator.pop(context, null),
+              onPressed: () =>
+                  Navigator.pop(context, null),
               child: const Text('Cancel'),
             ),
-
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.brown,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
               ),
               onPressed: () {
-                final price =
-                double.tryParse(priceController.text);
+                final price = double.tryParse(
+                    priceController.text);
 
-                if (nameController.text.trim().isEmpty ||
-                    brandController.text.trim().isEmpty ||
+                if (nameController.text
+                    .trim()
+                    .isEmpty ||
+                    brandController.text
+                        .trim()
+                        .isEmpty ||
                     price == null ||
                     price <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(
                     const SnackBar(
-                        content:
-                        Text("Please fill all fields correctly")),
+                        content: Text(
+                            "Fill all fields correctly")),
                   );
                   return;
                 }
 
                 Navigator.pop(context, {
-                  'name': nameController.text.trim(),
-                  'brand': brandController.text.trim(),
+                  'name':
+                  nameController.text.trim(),
+                  'brand':
+                  brandController.text.trim(),
                   'price': price,
                 });
               },
@@ -209,11 +224,12 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _auth.currentUser;
 
     if (user == null) {
       return const Scaffold(
-        body: Center(child: Text("User not logged in")),
+        body: Center(
+            child: Text("User not logged in")),
       );
     }
 
@@ -229,69 +245,72 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding:
+        const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+          CrossAxisAlignment.start,
           children: [
-
-            // 🔥 Welcome Card
             Container(
-              padding: const EdgeInsets.all(16),
+              padding:
+              const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.brown,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius:
+                BorderRadius.circular(16),
               ),
               child: const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment:
+                MainAxisAlignment
+                    .spaceBetween,
                 children: [
                   Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                    CrossAxisAlignment
+                        .start,
                     children: [
                       Text("Welcome Back 👋",
                           style: TextStyle(
-                              color: Colors.white,
+                              color:
+                              Colors.white,
                               fontSize: 16)),
                       SizedBox(height: 4),
-                      Text("Start billing your customer",
+                      Text(
+                          "Start billing your customer",
                           style: TextStyle(
-                              color: Colors.white70)),
+                              color: Colors
+                                  .white70)),
                     ],
                   ),
                   Icon(Icons.store,
-                      color: Colors.white, size: 40)
+                      color: Colors.white,
+                      size: 40)
                 ],
               ),
             ),
-
             const SizedBox(height: 25),
-
             const Text("Quick Actions",
                 style: TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.bold)),
-
+                    fontWeight:
+                    FontWeight.bold)),
             const SizedBox(height: 12),
-
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
+              physics:
+              const NeverScrollableScrollPhysics(),
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
               children: [
-
                 _actionButton(
-                  "Scan Product",
-                  Icons.qr_code_scanner,
-                  openScanner,
-                ),
-
+                    "Scan Product",
+                    Icons.qr_code_scanner,
+                    openScanner),
                 _actionButton(
-                  "Open Cart",
-                  Icons.shopping_cart,
-                  widget.onGoToCart,
-                ),
-
+                    "Open Cart",
+                    Icons.shopping_cart,
+                    widget.onGoToCart),
                 _actionButton(
                   "Sales Dashboard",
                   Icons.bar_chart,
@@ -307,8 +326,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-
-            const SizedBox(height: 40),
           ],
         ),
       ),
@@ -316,14 +333,18 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _actionButton(
-      String title, IconData icon, VoidCallback onTap) {
+      String title,
+      IconData icon,
+      VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius:
+      BorderRadius.circular(14),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius:
+          BorderRadius.circular(14),
           boxShadow: const [
             BoxShadow(
                 color: Colors.black12,
@@ -332,14 +353,16 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment:
+          MainAxisAlignment.center,
           children: [
             Icon(icon,
                 size: 32,
                 color: Colors.brown),
             const SizedBox(height: 8),
             Text(title,
-                textAlign: TextAlign.center),
+                textAlign:
+                TextAlign.center),
           ],
         ),
       ),

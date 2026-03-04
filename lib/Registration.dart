@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'login.dart';
-import 'layered_nav_bar.dart'; // ✅ IMPORTANT
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
@@ -23,13 +22,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
   String username = '';
   String email = '';
   String password = '';
-  String confirmPassword = '';
 
   bool isLoading = false;
   bool hidePassword = true;
   bool hideConfirmPassword = true;
 
-  /// ================= EMAIL REGISTER =================
+  // ================= EMAIL REGISTER =================
 
   Future<void> _registerUser() async {
     if (!_formKey.currentState!.validate()) return;
@@ -85,7 +83,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
     }
   }
 
-  /// ================= GOOGLE SIGN IN =================
+  // ================= GOOGLE SIGN IN =================
 
   Future<void> _signInWithGoogle() async {
     try {
@@ -112,7 +110,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
       User user = userCredential.user!;
 
-      // Save user in Firestore if first time
       final doc =
       await _firestore.collection('users').doc(user.uid).get();
 
@@ -125,25 +122,19 @@ class _RegistrationPageState extends State<RegistrationPage> {
         });
       }
 
-      if (!mounted) return;
+      // ❌ No manual navigation here
+      // ✅ AuthWrapper will automatically redirect
 
-      /// ✅ DIRECT AUTO REDIRECT TO POS HOME
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const LayeredNavigationExample(),
-        ),
-      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Google Sign-In failed: $e")),
+        SnackBar(content: Text("Google Sign-In failed")),
       );
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
   }
 
-  /// ================= UI =================
+  // ================= UI =================
 
   @override
   Widget build(BuildContext context) {
@@ -199,22 +190,13 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             ),
                             onPressed:
                             isLoading ? null : _signInWithGoogle,
-                            style: OutlinedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius:
-                                BorderRadius.circular(30),
-                              ),
-                            ),
                           ),
                         ),
 
                         const SizedBox(height: 20),
-
                         const Text("OR"),
-
                         const SizedBox(height: 20),
 
-                        /// Email Registration Form
                         Form(
                           key: _formKey,
                           child: Column(
@@ -251,12 +233,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
                                   ElevatedButton.styleFrom(
                                     backgroundColor:
                                     const Color(0xFF6D4C41),
-                                    shape:
-                                    RoundedRectangleBorder(
-                                      borderRadius:
-                                      BorderRadius.circular(
-                                          30),
-                                    ),
                                   ),
                                   child: isLoading
                                       ? const CircularProgressIndicator(
@@ -304,7 +280,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
     );
   }
 
-  /// ================= TEXT FIELD =================
+  // ================= TEXT FIELD =================
 
   Widget _buildTextField(String label, IconData icon,
       {bool isPassword = false, bool isConfirm = false}) {
@@ -333,7 +309,13 @@ class _RegistrationPageState extends State<RegistrationPage> {
         return null;
       },
       onChanged: (value) {
-        if (label == "Password") password = value;
+        if (label == "Username") {
+          username = value;
+        } else if (label == "Email") {
+          email = value;
+        } else if (label == "Password") {
+          password = value;
+        }
       },
     );
   }

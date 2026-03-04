@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'Registration.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+import 'auth_wrapper.dart';          // ✅ NEW
 import 'layered_nav_bar.dart';
 import 'settings.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,17 +19,19 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'POS App',
       debugShowCheckedModeBanner: false,
+
       theme: ThemeData(
         primarySwatch: Colors.brown,
+        scaffoldBackgroundColor: Colors.grey[100],
       ),
 
-      // 🔥 First screen
-      home: RegistrationPage(),
+      // ✅ START FROM AUTH WRAPPER
+      home: const AuthWrapper(),
 
-      // ✅ Only MAIN shell routes
+      // Optional named routes
       routes: {
-        '/home': (context) => LayeredNavigationExample(),
-        '/settings': (context) => SettingsPage(),
+        '/home': (context) => const LayeredNavigationExample(),
+        '/settings': (context) => const SettingsPage(),
       },
     );
   }

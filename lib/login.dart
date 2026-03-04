@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'layered_nav_bar.dart';
 import 'registration.dart';
 
 class LoginPage extends StatefulWidget {
@@ -26,35 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   bool isLoading = false;
   bool hidePassword = true;
 
-  /// ================= AUTO LOGIN =================
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkUserLoggedIn();
-    });
-  }
-
-  Future<void> _checkUserLoggedIn() async {
-    User? user = _auth.currentUser;
-
-    if (user != null) {
-      await user.reload();
-      user = _auth.currentUser;
-
-      if (user != null && mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const LayeredNavigationExample(),
-          ),
-        );
-      }
-    }
-  }
-
-  /// ================= EMAIL LOGIN =================
+  // ================= EMAIL LOGIN =================
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
@@ -71,7 +42,7 @@ class _LoginPageState extends State<LoginPage> {
       await user.reload();
       user = _auth.currentUser!;
 
-      /// 🔐 Block if email not verified
+      // 🔐 Block if email not verified
       if (!user.emailVerified) {
         await _auth.signOut();
 
@@ -80,22 +51,16 @@ class _LoginPageState extends State<LoginPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              "Please verify your email first. Also check Spam folder.",
+              "Please verify your email first. Check Spam folder.",
             ),
           ),
         );
-
         return;
       }
 
-      if (!mounted) return;
+      // ✅ DO NOT NAVIGATE
+      // AuthWrapper will redirect automatically
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const LayeredNavigationExample(),
-        ),
-      );
     } on FirebaseAuthException catch (e) {
       String message = "Login failed";
 
@@ -112,7 +77,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  /// ================= GOOGLE LOGIN =================
+  // ================= GOOGLE LOGIN =================
 
   Future<void> _signInWithGoogle() async {
     try {
@@ -139,7 +104,7 @@ class _LoginPageState extends State<LoginPage> {
 
       User user = userCredential.user!;
 
-      /// Save to Firestore if first time
+      // Save to Firestore if first time
       final doc =
       await _firestore.collection('users').doc(user.uid).get();
 
@@ -152,24 +117,19 @@ class _LoginPageState extends State<LoginPage> {
         });
       }
 
-      if (!mounted) return;
+      // ✅ No manual navigation
+      // AuthWrapper will handle redirect
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const LayeredNavigationExample(),
-        ),
-      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Google login failed: $e")),
+        const SnackBar(content: Text("Google login failed")),
       );
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
   }
 
-  /// ================= UI =================
+  // ================= UI =================
 
   @override
   Widget build(BuildContext context) {
@@ -236,10 +196,6 @@ class _LoginPageState extends State<LoginPage> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
                                 const Color(0xFF6D4C41),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                  BorderRadius.circular(30),
-                                ),
                               ),
                               child: isLoading
                                   ? const CircularProgressIndicator(
@@ -250,9 +206,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
 
                           const SizedBox(height: 20),
-
                           const Text("OR"),
-
                           const SizedBox(height: 20),
 
                           SizedBox(
@@ -267,12 +221,6 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               onPressed:
                               isLoading ? null : _signInWithGoogle,
-                              style: OutlinedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                  BorderRadius.circular(30),
-                                ),
-                              ),
                             ),
                           ),
 
@@ -308,7 +256,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  /// ================= TEXT FIELD =================
+  // ================= TEXT FIELD =================
 
   Widget _buildTextField(
       String label,
