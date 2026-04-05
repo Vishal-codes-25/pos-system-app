@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 
-import 'auth_wrapper.dart';          // ✅ NEW
+import 'auth_wrapper.dart';
 import 'layered_nav_bar.dart';
 import 'settings.dart';
+
+// NEW
+import 'pages/inventory_page.dart';
+import 'pages/add_product.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,13 +29,15 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.grey[100],
       ),
 
-      // ✅ START FROM AUTH WRAPPER
       home: const AuthWrapper(),
 
-      // Optional named routes
       routes: {
         '/home': (context) => const LayeredNavigationExample(),
         '/settings': (context) => const SettingsPage(),
+
+        // ✅ NEW ROUTES
+        '/inventory': (context) => const InventoryPage(),
+        '/addProduct': (context) => const AddProductPage(),
       },
     );
   }

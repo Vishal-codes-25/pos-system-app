@@ -46,7 +46,7 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    // 🔍 Check if product exists in Firestore
+    // 🔍 Check Firestore
     final existing = await _firestore
         .collection('products')
         .where('barcode', isEqualTo: barcode)
@@ -55,13 +55,11 @@ class _HomePageState extends State<HomePage> {
         .get();
 
     if (existing.docs.isNotEmpty) {
-      // ✅ Use saved DB product
       product = existing.docs.first.data();
+      product['id'] = existing.docs.first.id;
     } else {
-      // 🆕 If API product → confirm and save
       if ((product['source'] ?? 'database') == 'api') {
-        final updated =
-        await _showProductDialog(product);
+        final updated = await _showProductDialog(product);
         if (!mounted || updated == null) return;
 
         product = {
@@ -69,154 +67,89 @@ class _HomePageState extends State<HomePage> {
           'brand': updated['brand'],
           'price': updated['price'],
           'barcode': barcode,
+          'quantity': 1,
           'userId': user.uid,
           'createdAt': Timestamp.now(),
         };
 
+        final doc =
         await _firestore.collection('products').add(product);
 
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('New product saved')),
-        );
+        product['id'] = doc.id;
       }
     }
 
-    // 🔒 Ensure price is double
-    if (product['price'] != null) {
-      product['price'] =
-          (product['price'] as num).toDouble();
-    }
+    product['price'] = (product['price'] as num).toDouble();
 
-    // ✅ Add to cart
     CartPage.addToCart(product);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${product['name']} added to cart'),
-        duration: const Duration(seconds: 1),
-      ),
+      SnackBar(content: Text('${product['name']} added to cart')),
     );
 
     widget.onGoToCart();
   }
 
-  // ================== PRODUCT CONFIRM POPUP ==================
+  // ================== DIALOG ==================
 
   Future<Map<String, dynamic>?> _showProductDialog(
       Map<String, dynamic> product) async {
     final nameController =
     TextEditingController(text: product['name'] ?? '');
-
     final brandController =
     TextEditingController(text: product['brand'] ?? '');
-
-    final priceController = TextEditingController(
-      text: (product['price'] != null &&
-          product['price'] > 0)
-          ? product['price'].toString()
-          : '',
-    );
+    final priceController =
+    TextEditingController(text: product['price']?.toString() ?? '');
 
     return showDialog<Map<String, dynamic>>(
       context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text(
-            'Confirm New Product',
-            style:
-            TextStyle(fontWeight: FontWeight.bold),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Product Name',
-                    border: OutlineInputBorder(
-                      borderRadius:
-                      BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 15),
-                TextField(
-                  controller: brandController,
-                  decoration: InputDecoration(
-                    labelText: 'Brand',
-                    border: OutlineInputBorder(
-                      borderRadius:
-                      BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 15),
-                TextField(
-                  controller: priceController,
-                  keyboardType:
-                  TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Price',
-                    prefixText: '₹ ',
-                    border: OutlineInputBorder(
-                      borderRadius:
-                      BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ],
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: const Text(
+          'Confirm New Product',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: "Product Name"),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () =>
-                  Navigator.pop(context, null),
-              child: const Text('Cancel'),
+            const SizedBox(height: 10),
+            TextField(
+              controller: brandController,
+              decoration: const InputDecoration(labelText: "Brand"),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.brown,
-              ),
-              onPressed: () {
-                final price = double.tryParse(
-                    priceController.text);
-
-                if (nameController.text
-                    .trim()
-                    .isEmpty ||
-                    brandController.text
-                        .trim()
-                        .isEmpty ||
-                    price == null ||
-                    price <= 0) {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(
-                    const SnackBar(
-                        content: Text(
-                            "Fill all fields correctly")),
-                  );
-                  return;
-                }
-
-                Navigator.pop(context, {
-                  'name':
-                  nameController.text.trim(),
-                  'brand':
-                  brandController.text.trim(),
-                  'price': price,
-                });
-              },
-              child: const Text('Confirm'),
+            const SizedBox(height: 10),
+            TextField(
+              controller: priceController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: "Price"),
             ),
           ],
-        );
-      },
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () {
+              final price = double.tryParse(priceController.text);
+              if (price == null) return;
+
+              Navigator.pop(context, {
+                'name': nameController.text.trim(),
+                'brand': brandController.text.trim(),
+                'price': price,
+              });
+            },
+            child: const Text("Confirm"),
+          )
+        ],
+      ),
     );
   }
 
@@ -228,8 +161,7 @@ class _HomePageState extends State<HomePage> {
 
     if (user == null) {
       return const Scaffold(
-        body: Center(
-            child: Text("User not logged in")),
+        body: Center(child: Text("User not logged in")),
       );
     }
 
@@ -245,85 +177,64 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: SingleChildScrollView(
-        padding:
-        const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 🔥 HEADER (UNCHANGED)
             Container(
-              padding:
-              const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.brown,
-                borderRadius:
-                BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: const Row(
-                mainAxisAlignment:
-                MainAxisAlignment
-                    .spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment
-                        .start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text("Welcome Back 👋",
-                          style: TextStyle(
-                              color:
-                              Colors.white,
-                              fontSize: 16)),
+                          style:
+                          TextStyle(color: Colors.white, fontSize: 16)),
                       SizedBox(height: 4),
-                      Text(
-                          "Start billing your customer",
-                          style: TextStyle(
-                              color: Colors
-                                  .white70)),
+                      Text("Start billing your customer",
+                          style: TextStyle(color: Colors.white70)),
                     ],
                   ),
-                  Icon(Icons.store,
-                      color: Colors.white,
-                      size: 40)
+                  Icon(Icons.store, color: Colors.white, size: 40)
                 ],
               ),
             ),
+
             const SizedBox(height: 25),
+
             const Text("Quick Actions",
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight:
-                    FontWeight.bold)),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+
             const SizedBox(height: 12),
+
+            // 🔥 EXACT GRID UI (JUST ADDED INVENTORY)
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
-              physics:
-              const NeverScrollableScrollPhysics(),
+              physics: const NeverScrollableScrollPhysics(),
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
               children: [
-                _actionButton(
-                    "Scan Product",
-                    Icons.qr_code_scanner,
-                    openScanner),
-                _actionButton(
-                    "Open Cart",
-                    Icons.shopping_cart,
-                    widget.onGoToCart),
-                _actionButton(
-                  "Sales Dashboard",
-                  Icons.bar_chart,
-                      () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                        const SalesDashboardPage(),
-                      ),
-                    );
-                  },
-                ),
+                _actionCard("Scan Product", Icons.qr_code_scanner, openScanner),
+                _actionCard("Open Cart", Icons.shopping_cart, widget.onGoToCart),
+                _actionCard("Inventory", Icons.inventory, () {
+                  Navigator.pushNamed(context, '/inventory');
+                }),
+                _actionCard("Sales Dashboard", Icons.bar_chart, () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SalesDashboardPage(),
+                    ),
+                  );
+                }),
               ],
             ),
           ],
@@ -332,19 +243,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _actionButton(
-      String title,
-      IconData icon,
-      VoidCallback onTap) {
+  Widget _actionCard(
+      String title, IconData icon, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius:
-      BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius:
-          BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(14),
           boxShadow: const [
             BoxShadow(
                 color: Colors.black12,
@@ -353,16 +260,11 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         child: Column(
-          mainAxisAlignment:
-          MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon,
-                size: 32,
-                color: Colors.brown),
+            Icon(icon, size: 32, color: Colors.brown),
             const SizedBox(height: 8),
-            Text(title,
-                textAlign:
-                TextAlign.center),
+            Text(title, textAlign: TextAlign.center),
           ],
         ),
       ),

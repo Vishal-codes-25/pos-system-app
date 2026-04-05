@@ -94,24 +94,13 @@ class _CartPageState extends State<CartPage> {
   double get change => cashReceived - totalPrice;
 
   Future<void> confirmSale() async {
-    FocusScope.of(context).unfocus(); // 🔥 CLOSE KEYBOARD
+    FocusScope.of(context).unfocus();
 
     final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-    if (user == null) {
-      _showMessage("User not logged in");
-      return;
-    }
-
-    if (CartPage.cartItems.isEmpty) {
-      _showMessage("Cart is empty");
-      return;
-    }
-
-    if (cashReceived < totalPrice) {
-      _showMessage("Cash is less than total amount");
-      return;
-    }
+    if (CartPage.cartItems.isEmpty) return;
+    if (cashReceived < totalPrice) return;
 
     try {
       final saleData = {
@@ -125,18 +114,34 @@ class _CartPageState extends State<CartPage> {
           "name": item.name,
           "price": item.price,
           "quantity": item.quantity,
-          "subtotal": item.total,
         }).toList(),
       };
 
-      await FirebaseFirestore.instance
-          .collection("sales")
-          .add(saleData);
+      await FirebaseFirestore.instance.collection("sales").add(saleData);
+
+      // 🔥 STOCK UPDATE (VERY IMPORTANT)
+      for (var item in CartPage.cartItems) {
+        final query = await FirebaseFirestore.instance
+            .collection('products')
+            .where('barcode', isEqualTo: item.barcode)
+            .where('userId', isEqualTo: user.uid)
+            .limit(1)
+            .get();
+
+        if (query.docs.isNotEmpty) {
+          final doc = query.docs.first;
+          final currentQty = doc['quantity'] ?? 0;
+
+          await doc.reference.update({
+            'quantity': currentQty - item.quantity,
+          });
+        }
+      }
 
       CartPage.clearCart();
       _cashController.clear();
 
-      _showMessage("Sale Completed Successfully ✅");
+      _showMessage("Sale Completed ✅");
     } catch (e) {
       _showMessage("Error saving sale");
     }
